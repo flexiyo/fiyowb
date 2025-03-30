@@ -3,6 +3,14 @@
     "staging": "flexomate-api",
     "default": "flexomate-api"
   },
-  "targets": {},
+  "targets": {
+    "flexomate-api": {
+      "hosting": {
+        "flexiyo": [
+          "flexiyo"
+        ]
+      }
+    }
+  },
   "etags": {}
 }
