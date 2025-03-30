@@ -58,7 +58,7 @@ const PlayerStack = () => {
                             .share({
                               title: "Listen on Flexiyo",
                               text: `Check out this track on Flexiyo!`,
-                              url: `https://flexiyo.vercel.app/music?track=${currentTrack?.videoId}`,
+                              url: `https://flexiyo.web.app/music?track=${currentTrack?.videoId}`,
                             })
                             .catch((err) => console.log("Error sharing:", err));
                         } else {
