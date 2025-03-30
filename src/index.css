@@ -1,0 +1,41 @@
+@font-face {
+  font-family: "SpotifyMedium";
+  src: url("./assets/fonts/SpotifyMedium.ttf") format("truetype");
+}
+
+@import "tailwindcss";
+
+@theme {
+  --font-SpotifyMedium: "SpotifyMedium", sans-serif;
+  --color-body-bg: #ffffff;
+  --color-body-bg-dark: #000b13;
+  --color-primary-bg: #f7f8f9;
+  --color-primary-bg-dark: #11131d;
+  --color-secondary-bg: #f1f2f4;
+  --color-secondary-bg-dark: #191d28;
+  --color-tertiary-bg: #dcdfe4;
+  --color-tertiary-bg-dark: #222933;
+  --color-quaternary-bg: #cfd4de;
+  --color-quaternary-bg-dark: #272e39;
+  --color-transparent-bg: rgba(245, 245, 247, 0.789);
+  --color-transparent-bg-dark: rgba(33, 36, 39, 0.789);
+  --color-primary-text: #000000;
+  --color-primary-text-dark: #ffffff;
+}
+
+button,
+i,
+svg {
+  cursor: pointer;
+}
+
+/* Hide scrollbar for Chrome, Safari, and Edge */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for Firefox */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
