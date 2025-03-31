@@ -65,7 +65,7 @@ const PlayerStack = () => {
                           // Fallback: Copy to clipboard
                           navigator.clipboard
                             .writeText(
-                              `https://flexiyo.vercel.app/music?track=${currentTrack?.videoId}`
+                              `https://flexiyo.web.app/music?track=${currentTrack?.videoId}`
                             )
                             .then(() => alert("Link copied to clipboard!"))
                             .catch(() => alert("Failed to copy link."));
