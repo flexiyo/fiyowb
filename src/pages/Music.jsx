@@ -37,7 +37,7 @@ const Music = () => {
 
     if (currentTrack?.videoId) {
       queryParams.set("track", currentTrack.videoId);
-      document.title = `${currentTrack?.title?.slice(0, 5)} - Flexiyo`;
+      document.title = `${currentTrack?.title} - Flexiyo`;
     } else {
       queryParams.delete("track");
       document.title = "Flexiyo Music";
