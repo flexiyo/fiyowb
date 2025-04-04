@@ -17,7 +17,6 @@ Flexiyo is a next-generation **social media platform** that integrates **free mu
 ### **Frontend:**
 - **React (Vite)** – High-performance UI rendering.
 - **Tailwind CSS** – Modern styling for a clean and responsive design.
-- **Radix UI** – Accessible components for a better user experience.
 - **Framer Motion** – Smooth animations and transitions.
 
 ### **Backend:**
@@ -31,8 +30,8 @@ Flexiyo is a next-generation **social media platform** that integrates **free mu
 
 ## 📦 Deployment
 
-### **Hosting Providers:**
-- **Frontend:** Vercel (Fast global deployment for the React app)
+### **Hosting Providers:** (FREE)
+- **Frontend:** Firebase (Fast global deployment for the React app)
 - **Backend:**
   - **GraphQL API (FiyoGQL)** → Render
   - **Microservices (FiyoUser, FiyoChat, FiyoFeed, etc.)** → Koyeb (Flexible & scalable hosting)
@@ -45,63 +44,12 @@ Ensure you have the following installed:
 - Yarn or npm
 - PostgreSQL & CassandraDB (for backend)
 
-### **Setup & Installation**
-
-#### **Frontend (React + Vite)**
-```sh
-# Clone the repository
-git clone https://github.com/your-username/flexiyo.git
-cd flexiyo/frontend
-
-# Install dependencies
-yarn install  # or npm install
-
-# Start development server
-yarn dev  # or npm run dev
-```
-
-#### **Backend (GraphQL & Microservices)**
-```sh
-# Navigate to backend folder
-cd flexiyo/backend
-
-# Install dependencies
-yarn install  # or npm install
-
-# Start GraphQL Server
-yarn start:graphql  # or npm run start:graphql
-
-# Start microservices
-yarn start:services  # or npm run start:services
-```
-
-## 📄 API Endpoints
-Flexiyo uses a **GraphQL API** to serve client requests efficiently.
-
-Example Query:
-```graphql
-query {
-  getUserProfile(userId: "1234") {
-    name
-    followers
-    musicPreferences
-  }
-}
-```
-
 ## 🤝 Contributing
 We welcome contributions! Feel free to submit issues, feature requests, or pull requests.
 
-1. Fork the repo
-2. Create a feature branch (`git checkout -b feature-name`)
-3. Commit changes (`git commit -m "Added new feature"`)
-4. Push to branch (`git push origin feature-name`)
-5. Submit a PR
-
 ## 📜 License
-Flexiyo is **proprietary software** developed by [Kaushal Krishna](https://github.com/kaushalkrishna). All rights reserved.
+Flexiyo is **proprietary software** developed by [Kaushal Krishna](https://github.com/kaushalkrishnax). All rights reserved.
 
 ## 🌐 Links
-- **Website:** [flexiyo.vercel.app](https://flexiyo.vercel.app)
-- **GitHub:** [github.com/your-username/flexiyo](https://github.com/your-username/flexiyo)
+- **Website:** [flexiyo.web.app](https://flexiyo.web.app)
 
