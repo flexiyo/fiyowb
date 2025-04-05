@@ -104,22 +104,13 @@ export const UPDATE_USER = gql`
         success
         message
       }
-      user {
+      updated_fields {
         full_name
         username
         account_type
         dob
         gender
         profession
-        bio {
-          text
-          links
-          track {
-            id
-            title
-            artist
-          }
-        }
         avatar
         banner
       }
