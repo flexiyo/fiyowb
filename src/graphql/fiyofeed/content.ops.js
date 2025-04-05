@@ -95,12 +95,7 @@ export const UPDATE_CONTENT = gql`
         message
       }
       updated_fields {
-        collabs {
-          id
-          full_name
-          username
-          avatar
-        }
+        collabs
         caption
         hashtags
       }
