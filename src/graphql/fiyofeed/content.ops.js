@@ -75,6 +75,7 @@ export const CREATE_CONTENT = gql`
         success
         message
       }
+      content_id
     }
   }
 `;

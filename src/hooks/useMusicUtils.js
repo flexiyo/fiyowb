@@ -36,14 +36,20 @@ const useMusicUtils = ({
   /** Get Cached Track Data */
   const getCachedTrackData = async (videoId) => {
     const db = await openTrackDB();
-    const tx = db.transaction("tracks", "readonly");
-    const store = tx.objectStore("tracks");
 
-    const track = await store.get(videoId);
+    const readTx = db.transaction("tracks", "readonly");
+    const readStore = readTx.objectStore("tracks");
+    const track = await readStore.get(videoId);
+    await readTx.done;
+
     if (track?.createdAt < new Date().getTime() - 6 * 60 * 60 * 1000) {
-      await store.delete(videoId);
+      const writeTx = db.transaction("tracks", "readwrite");
+      const writeStore = writeTx.objectStore("tracks");
+      await writeStore.delete(videoId);
+      await writeTx.done;
       return null;
     }
+
     return track;
   };
 

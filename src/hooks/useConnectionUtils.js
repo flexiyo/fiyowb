@@ -1,25 +1,5 @@
-import client from "../utils/apolloClient.js";
+import { executeQuery } from "../utils/executeQuery";
 import * as ops from "../graphql/fiyouser/connection.ops.js";
-
-/** Generic Query Handler */
-const executeQuery = async (type, queryDoc, variables = {}) => {
-  try {
-    const { data } = await client[type]({
-      [type === "query" ? "query" : "mutation"]: queryDoc,
-      variables,
-      fetchPolicy: type === "query" ? "network-only" : undefined,
-    });
-    return data?.[Object.keys(data)[0]];
-  } catch (error) {
-    console.error(
-      `GraphQL ${type.toUpperCase()} Error in ${
-        queryDoc.definitions[0].name.value
-      }:`,
-      error
-    );
-    return null;
-  }
-};
 
 /** Query Functions */
 export const getUserFollowers = (user_id, offset = 0) =>

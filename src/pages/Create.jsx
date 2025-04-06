@@ -1,16 +1,23 @@
-import React from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import TypeSelector from "../components/create/TypeSelector";
 import MediaPreview from "../components/create/MediaPreview";
 import SelectMedia from "../components/create/steps/SelectMedia";
 import EditMedia from "../components/create/steps/EditMedia";
 import AddDetails from "../components/create/steps/AddDetails";
+import { createContent } from "../hooks/useContentUtils";
 
 const Create = () => {
-  const [selectedType, setSelectedType] = React.useState("Post");
-  const [currentStep, setCurrentStep] = React.useState(1);
-  const [mediaUrl, setMediaUrl] = React.useState(null);
-  const [mediaType, setMediaType] = React.useState(null);
-  const [caption, setCaption] = React.useState("");
+  const navigate = useNavigate();
+
+  const [selectedType, setSelectedType] = useState("Post");
+  const [currentStep, setCurrentStep] = useState(1);
+  const [mediaUrl, setMediaUrl] = useState(null);
+  const [mediaType, setMediaType] = useState(null);
+  const [caption, setCaption] = useState("");
+  const [hashtags, setHashtags] = useState([]);
+  const [track, setTrack] = useState({});
+  const [collabs, setCollabs] = useState([]);
 
   const isValidMediaType = (type, mediaType) => {
     switch (type) {
@@ -23,7 +30,7 @@ const Create = () => {
     }
   };
 
-  const [imageSettings, setImageSettings] = React.useState({
+  const [imageSettings, setImageSettings] = useState({
     brightness: 100,
     contrast: 100,
     saturation: 100,
@@ -47,6 +54,19 @@ const Create = () => {
     setMediaUrl(url);
     setMediaType(type);
     setCurrentStep(2);
+  };
+
+  const shareContent = () => {
+    createContent(
+      mediaUrl,
+      selectedType === "Post" ? "posts" : "clips",
+      caption,
+      [],
+      null,
+      []
+    ).then(({ content_id }) => {
+      navigate(`/${selectedType === "Post" ? "p" : "c"}/${content_id}`);
+    });
   };
 
   const renderStep = () => {
@@ -73,7 +93,7 @@ const Create = () => {
           />
         );
       case 3:
-        return <AddDetails caption={caption} setCaption={setCaption} />;
+        return <AddDetails caption={caption} setCaption={setCaption} hashtags={hashtags} setHashtags={setHashtags} track={track} setTrack={setTrack} collabs={collabs} setCollabs={setCollabs} />;
       default:
         return null;
     }
@@ -116,7 +136,7 @@ const Create = () => {
               {currentStep === 3 ? (
                 <button
                   className="px-6 py-2 rounded-full cursor-pointer bg-blue-500 dark:bg-blue-600 text-white dark:text-blue-100"
-                  onClick={() => {}}
+                  onClick={shareContent}
                 >
                   Share
                 </button>
