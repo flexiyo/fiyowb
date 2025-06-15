@@ -5,6 +5,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import UserContext from "../../context/items/UserContext";
 import { LOGIN_USER } from "../../graphql/fiyouser/auth.ops.js";
+import flexiyoLogo from "../../assets/images/flexiyo.png";
 
 const Login = () => {
   const { isUserAuthenticated, saveUserInfo } = useContext(UserContext);
@@ -72,7 +73,7 @@ const Login = () => {
         {/* Left Section - Hidden on md and below */}
         <div className="hidden lg:flex lg:w-1/2 p-8 lg:p-12 bg-gradient-to-br from-white via-pink-200 to-blue-300 text-gray-800 flex-col justify-center items-center">
           <img
-            src="https://cdnfiyo.github.io/img/logos/flexiyo.png"
+            src={flexiyoLogo}
             alt="Flexiyo Logo"
             className="w-24 h-24 lg:w-28 lg:h-28 rounded-full mb-6 border-4 border-gray-200"
           />
