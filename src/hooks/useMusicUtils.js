@@ -71,41 +71,43 @@ const useMusicUtils = ({
     }
   };
 
-  /** Get Track Data (Optimized) */
-  const getTrackData = async (videoId, searchTerm) => {
+  /** Get Track Data */
+  const getTrackData = async (videoId) => {
     try {
-      // Fire cache check and YTMusic API call in parallel
-      const [cachedTrack, trackRes] = await Promise.all([
-        getCachedTrackData(videoId),
-        axios.get(`${YTMUSIC_BASE_URI}/track`, {
-          params: { videoId, searchTerm },
-        }),
-      ]);
+      const cachedTrack = await getCachedTrackData(videoId);
+      if (cachedTrack) {
+        return cachedTrack;
+      }
 
-      if (cachedTrack) return cachedTrack;
+      const trackRes = await axios.get(
+        `${YTMUSIC_BASE_URI}/track?videoId=${videoId}`
+      );
+      const trackData = trackRes?.data?.data;
 
-      const data = trackRes?.data?.data;
-      if (!data?.tS || !data?.tH) {
+      if (!trackData || !trackData.tS || !trackData.tH) {
         throw new Error("Missing tS or tH in track response");
       }
 
       const { title, artists, images, duration, playlistId, browseId, tS, tH } =
-        data;
+        trackData;
 
-      // Fetch GenYT links
-      const linksHtml = await fetch(
+      const linksResponse = await fetch(
         `https://www.genyt.net/getLinks.php?vid=${videoId}&s=${tS}&h=${tH}`
-      ).then((res) => {
-        if (!res.ok) throw new Error(`GenYT error: ${res.statusText}`);
-        return res.text();
-      });
+      );
+      if (!linksResponse.ok)
+        throw new Error(
+          `Failed to get download links: ${linksResponse.statusText}`
+        );
 
-      const $ = load(linksHtml);
-      const urls = {
-        audio: $("a.btn")
+      const $ = load(await linksResponse.text());
+      const extractLinks = (filter) =>
+        $("a.btn")
           .map((_, el) => $(el).attr("href"))
           .get()
-          .filter((url) => url.includes("mime=audio%2Fwebm")),
+          .filter(filter);
+
+      const urls = {
+        audio: extractLinks((url) => url.includes("mime=audio%2Fwebm")),
       };
 
       const track = {
@@ -120,8 +122,8 @@ const useMusicUtils = ({
         createdAt: new Date(),
       };
 
-      // Cache and return
-      cacheTrackData(track); // Async, non-blocking
+      await cacheTrackData(track);
+
       return track;
     } catch (error) {
       console.error(`Error fetching track data: ${error.message}`);

@@ -6,6 +6,7 @@ import MusicContext from "../context/items/MusicContext";
 import MusicSearchBox from "../components/music/MusicSearchBox";
 import TrackList from "../components/music/TrackList";
 import TrackDeck from "../components/music/player/TrackDeck";
+import flexiyoLogo from "../assets/images/flexiyo.png";
 
 const Music = () => {
   const {
@@ -75,9 +76,7 @@ const Music = () => {
     if (!searchQuery) {
       setIsLoading(true);
       searchTracks("Top+Hindi+And+English+Tracks").then((tracks) => {
-        setTracks(
-          tracks?.sort(() => 0.5 - Math.random())
-        );
+        setTracks(tracks?.sort(() => 0.5 - Math.random()));
         setIsLoading(false);
       });
     }
@@ -166,10 +165,7 @@ const Music = () => {
         <div className="flex-1 lg:min-w-7/12">
           <div className="flex flex-col h-full">
             <CustomTopNav
-              logoImage={
-                !isSearchBoxActive &&
-                "https://cdnfiyo.github.io/img/logos/flexiyo.png"
-              }
+              logoImage={!isSearchBoxActive && flexiyoLogo}
               keepBorder={false}
               title={!isSearchBoxActive && "Music"}
               midComponent={

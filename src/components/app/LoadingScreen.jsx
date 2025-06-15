@@ -1,4 +1,5 @@
 import React from "react";
+import flexiyoLogo from "../assets/images/flexiyo.png";
 
 const LoadingScreen = () => {
   const width = window.innerWidth;
@@ -7,7 +8,7 @@ const LoadingScreen = () => {
     <div className="flex items-center h-screen bg-body-bg dark:bg-body-bg-dark text-black dark:text-white justify-center">
       <div className="flex flex-col items-center justify-between h-8/12">
         <img
-          src="https://cdnfiyo.github.io/img/logos/flexiyo.png"
+          src={flexiyoLogo}
           alt="Loading"
           className="w-auto h-30"
           style={{ width: width, objectFit: "contain" }}
