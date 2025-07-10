@@ -43,6 +43,7 @@ function App() {
   const unauthenticatedRoutes = (
     <>
       <Route path="*" element={<AuthLogin />} />
+      <Route path="/" element={<Music />} />
       <Route path="/auth/login" element={<AuthLogin />} />
       <Route path="/auth/signup" element={<AuthSignup />} />
       <Route path="/music" element={<Music />} />
