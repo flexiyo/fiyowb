@@ -2,7 +2,7 @@ import { memo, useContext, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowDownCircle } from "lucide-react";
 import MusicContext from "../../context/items/MusicContext";
-
+import NativeBannerAd from "./NativeBannerAd";
 const TrackItem = memo(({ track, loading }) => {
   const { getTrack, getTrackData } = useContext(MusicContext);
 
@@ -194,8 +194,9 @@ const TrackList = memo(({ tracks, loading, ref, onScrollEnd }) => {
       onScroll={handleScroll}
     >
       {tracks?.length > 0 &&
-        tracks?.map((track) => (
+        tracks?.map((track, index) => (
           <TrackItem key={track?.videoId} track={track} loading={loading} />
+          {(index + 1) % 5 === 0 && <NativeBannerAd />}
         ))}
     </div>
   );
