@@ -58,14 +58,14 @@ const PlayerStack = () => {
                             .share({
                               title: "Listen on Flexiyo",
                               text: `Check out this track on Flexiyo!`,
-                              url: `https://flexiyo.web.app/music?track=${currentTrack?.videoId}`,
+                              url: `https://flexiyo.web.app/music/${currentTrack?.slug}`,
                             })
                             .catch((err) => console.log("Error sharing:", err));
                         } else {
                           // Fallback: Copy to clipboard
                           navigator.clipboard
                             .writeText(
-                              `https://flexiyo.web.app/music?track=${currentTrack?.videoId}`
+                              `https://flexiyo.web.app/music/${currentTrack?.slug}`
                             )
                             .then(() => alert("Link copied to clipboard!"))
                             .catch(() => alert("Failed to copy link."));

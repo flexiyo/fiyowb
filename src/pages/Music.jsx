@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect, useContext } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect, useContext } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Music4Icon } from "lucide-react";
+import PreferencesModal from "../components/music/PreferencesModal";
 import CustomTopNav from "../layout/items/CustomTopNav";
 import MusicContext from "../context/items/MusicContext";
-import MusicSearchBox from "../components/music/MusicSearchBox";
+import MusicSearchBox from "../components/music/SearchBox";
 import TrackList from "../components/music/TrackList";
 import TrackDeck from "../components/music/player/TrackDeck";
 import flexiyoLogo from "../assets/images/flexiyo.png";
@@ -24,52 +25,52 @@ const Music = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
+  const { slug: trackSlug } = useParams();
 
   const [tracks, setTracks] = useState([]);
   const [isSearchBoxActive, setIsSearchBoxActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isPreferencesModalOpen, setIsPreferencesModalOpen] = useState(false);
+
   const searchBoxRef = useRef(null);
   const trackListRef = useRef(null);
 
-  /** Live Params Modifier */
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
+    const q = queryParams.get("q");
 
-    if (currentTrack?.videoId) {
-      queryParams.set("track", currentTrack.videoId);
-      document.title = `${currentTrack?.title} - Flexiyo`;
-    } else {
-      queryParams.delete("track");
-      document.title = "Flexiyo Music";
+    if (q) {
+      setSearchQuery(q);
+      handleSearch(q);
     }
+  }, [location.search]);
 
-    navigate({ search: queryParams.toString() }, { replace: true });
-  }, [searchQuery, currentTrack?.videoId]);
-
-  /** Query Params */
   useEffect(() => {
-    const fetchTrackData = async () => {
-      const queryParams = new URLSearchParams(location.search);
-      const q = queryParams.get("q");
-      const trackParam = queryParams.get("track");
-
-      if (trackParam && trackParam !== currentTrack?.videoId) {
-        try {
-          await getTrack(trackParam);
-        } catch (error) {
-          console.error("Error fetching track data:", error);
-        }
+    if (currentTrack?.slug && trackSlug !== currentTrack.slug) {
+      const currentPath = `/music/${currentTrack.slug}`;
+      if (location.pathname !== currentPath) {
+        navigate(currentPath, { replace: true });
       }
+    }
+  }, [currentTrack?.slug]);
 
-      if (q) {
-        setSearchQuery(q);
-        handleSearch(q);
+  useEffect(() => {
+    const fetchTrackIfNeeded = async () => {
+      if (!trackSlug || trackSlug === currentTrack?.slug) return;
+
+      try {
+        const videoId = trackSlug.split("_")[1];
+        if (videoId) {
+          await getTrack(videoId);
+        }
+      } catch (error) {
+        console.error("Error fetching track data:", error);
       }
     };
 
-    fetchTrackData();
-  }, [location.search]);
+    fetchTrackIfNeeded();
+  }, [trackSlug]);
 
   /** Top Tracks */
   useEffect(() => {
@@ -80,7 +81,7 @@ const Music = () => {
         setIsLoading(false);
       });
     }
-  }, [searchQuery]);
+  }, []);
 
   /** Search Box */
   const openSearchBox = () => {
@@ -90,11 +91,10 @@ const Music = () => {
 
   const closeSearchBox = () => {
     setIsSearchBoxActive(false);
-    setSearchQuery("");
   };
 
   const handleSearch = async (query) => {
-    if (!query?.trim()) return;
+    if (!query) return;
 
     setIsLoading(true);
     try {
@@ -152,7 +152,7 @@ const Music = () => {
   }, [isSearchBoxActive, isAudioPlaying, audioProgress]);
 
   const handleTrackListScrollEnd = () => {
-    if (tracks?.length < 40 && continuation) {
+    if (tracks?.length < 60 && continuation) {
       searchTracks(searchQuery, continuation).then((tracks) => {
         setTracks((prevTracks) => [...prevTracks, ...tracks]);
       });
@@ -165,11 +165,11 @@ const Music = () => {
         <div className="flex-1 lg:min-w-7/12">
           <div className="flex flex-col h-full">
             <CustomTopNav
-              logoImage={!isSearchBoxActive && flexiyoLogo}
+              logoImage={flexiyoLogo}
               keepBorder={false}
-              title={!isSearchBoxActive && "Music"}
+              title="Music"
               midComponent={
-                isSearchBoxActive && (
+                isSearchBoxActive ? (
                   <MusicSearchBox
                     searchQuery={searchQuery}
                     setSearchQuery={setSearchQuery}
@@ -177,10 +177,32 @@ const Music = () => {
                     closeSearchBox={closeSearchBox}
                     onSearch={handleSearch}
                   />
-                )
+                ) : searchQuery ? (
+                  <div className="bg-gray-100 dark:bg-gray-800 rounded-xl px-3 py-2 w-full flex items-center overflow-hidden">
+                    <div
+                      className="flex items-center gap-2 flex-grow min-w-0 overflow-hidden cursor-pointer"
+                      onClick={openSearchBox}
+                    >
+                      <i className="fa fa-search text-gray-500 flex-shrink-0" />
+
+                      <span className="text-sm text-gray-900 dark:text-white truncate whitespace-nowrap overflow-hidden w-full block">
+                        {searchQuery || "Search..."}
+                      </span>
+                    </div>
+
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="ml-2 flex-shrink-0"
+                      >
+                        <i className="fa fa-times text-gray-600 dark:text-white" />
+                      </button>
+                    )}
+                  </div>
+                ) : null
               }
-              rightIcons={
-                !isSearchBoxActive
+              rightIcons={[
+                ...(!searchQuery
                   ? [
                       {
                         resource: (
@@ -192,15 +214,20 @@ const Music = () => {
                         ),
                         onClick: openSearchBox,
                       },
-                      {
-                        resource: (
-                          <i className="fa fa-gear text-2xl" title="Settings" />
-                        ),
-                        onClick: () => {},
-                      },
                     ]
-                  : []
-              }
+                  : []),
+                {
+                  resource: (
+                    <PreferencesModal
+                      show={isPreferencesModalOpen}
+                      setShow={(bool) => {
+                        setIsPreferencesModalOpen(bool);
+                        console.log(bool);
+                      }}
+                    />
+                  ),
+                },
+              ]}
             />
             <div className="flex flex-col px-6 pt-2 gap-4 flex-grow pb-8">
               <TrackList

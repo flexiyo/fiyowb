@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import AppContext from "./context/items/AppContext";
 import UserContext from "./context/items/UserContext";
 import LoadingScreen from "./components/app/LoadingScreen";
@@ -34,7 +34,7 @@ function App() {
       <Route path="/clips" element={<Clips />} />
       <Route path="/u/:username" element={<Profile />} />
       <Route path="/music" element={<Music />} />
-      <Route path="/create" element={<Create />} />
+      <Route path="/music/:slug" element={<Music />} />
       <Route path="/direct/t/:roomId" element={<ChatStack />} />
       <Route path="/direct/inbox" element={<ChatStack />} />
     </>
@@ -43,10 +43,11 @@ function App() {
   const unauthenticatedRoutes = (
     <>
       <Route path="*" element={<AuthLogin />} />
-      <Route path="/" element={<Music />} />
+      <Route path="/" element={<Navigate to="/music" />} />
       <Route path="/auth/login" element={<AuthLogin />} />
       <Route path="/auth/signup" element={<AuthSignup />} />
       <Route path="/music" element={<Music />} />
+      <Route path="/music/:slug" element={<Music />} />
       <Route path="/clips" element={<Clips />} />
       <Route path="/u/:username" element={<Profile />} />
     </>

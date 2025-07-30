@@ -36,8 +36,10 @@ const TrackDeck = () => {
           className="w-full h-full aspect-square border-none rounded-xl bg-secondary-bg dark:bg-secondary-bg-dark"
         />
         <div className="flex flex-col items-start justify-start w-full px-2 pt-4 gap-2">
-          <span className="text-2xl">{currentTrack?.title}</span>
-          <span className="text-sm text-gray-500">{currentTrack?.artists}</span>
+          <span className="text-2xl line-clamp-2">{currentTrack?.title}</span>
+          <span className="text-sm text-gray-500 line-clamp-3">
+            {currentTrack?.artists}
+          </span>
         </div>
       </div>
 

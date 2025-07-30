@@ -88,7 +88,7 @@ const useMusicUtils = ({
         throw new Error("Missing tS or tH in track response");
       }
 
-      const { title, artists, images, duration, playlistId, browseId, tS, tH } =
+      const { slug, title, artists, images, duration, playlistId, browseId, tS, tH } =
         trackData;
 
       const linksResponse = await fetch(
@@ -112,6 +112,7 @@ const useMusicUtils = ({
 
       const track = {
         videoId,
+        slug,
         title,
         artists,
         image: images?.[3]?.url || null,
@@ -126,7 +127,7 @@ const useMusicUtils = ({
 
       return track;
     } catch (error) {
-      console.error(`Error fetching track data: ${error.message}`);
+      console.error(`Error fetching track data: ${error}`);
       return null;
     }
   };
