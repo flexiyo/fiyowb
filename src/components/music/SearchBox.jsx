@@ -71,9 +71,9 @@ const SearchBox = ({
     }
   };
 
-  const handleSuggestionClick = (suggestionText) => {
-    setSearchQuery(suggestionText);
-    onSearch(suggestionText);
+  const handleSuggestionClick = (suggestionQuery) => {
+    setSearchQuery(suggestionQuery);
+    handleSearch(suggestionQuery);
     closeSearchBox();
   };
 
@@ -130,7 +130,7 @@ const SearchBox = ({
               <button
                 key={index}
                 type="button"
-                onClick={() => handleSuggestionClick(item?.suggestionText)}
+                onClick={() => handleSuggestionClick(item?.suggestionQuery)}
                 className="flex items-center gap-4 w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-secondary-bg-dark rounded-md transition-colors"
               >
                 <i className="fa fa-search text-gray-400 flex-shrink-0" />
