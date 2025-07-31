@@ -247,7 +247,7 @@ const TrackList = memo(({ tracks = [], loading, ref, onScrollEnd }) => {
           {tracks.map((track, index) => (
             <React.Fragment key={track?.videoId}>
               <TrackItem track={track} loading={loading} />
-              {/* {(index + 1) % 5 === 0 && <NativeBannerAd />} */}
+              {(index + 1) % 5 === 0 && <NativeBannerAd />}
             </React.Fragment>
           ))}
 

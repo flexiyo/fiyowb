@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from "react";
 import { useContext } from "react";
 import MusicContext from "../../../context/items/MusicContext";
 import AudioProgressBar from "./AudioProgressBar";
+import NativeBannerAd from "../NativeBannerAd"
 
 const TrackDeck = () => {
   const {
@@ -99,6 +100,7 @@ const TrackDeck = () => {
           </svg>
         </button>
       </div>
+      <NativeBannerAd />
       <div
         className="flex flex-col justify-center rounded-xl mt-4 p-4 w-full bg-secondary-bg dark:bg-secondary-bg-dark gap-4"
         ref={lyricsRef}
