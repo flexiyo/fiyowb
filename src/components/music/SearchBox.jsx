@@ -12,11 +12,8 @@ const SearchBox = ({
 }) => {
   const [searchSuggestions, setSearchSuggestions] = useState([]);
   const containerRef = useRef(null);
-  const isSubmittingRef = useRef(false);
 
   useEffect(() => {
-    if (isSubmittingRef.current) return;
-
     const timerId = setTimeout(() => {
       if (searchQuery) {
         fetchSearchSuggestions(searchQuery);
@@ -51,30 +48,21 @@ const SearchBox = ({
     }
   };
 
-  const handleSearch = () => {
-    const query = searchQuery?.trim();
+  const handleSearch = (query) => {
     if (!query) return;
 
-    isSubmittingRef.current = true;
     setSearchSuggestions([]);
     onSearch(query);
     closeSearchBox();
-    isSubmittingRef.current = false;
   };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      handleSearch();
+      handleSearch(searchQuery);
     } else if (e.key === "Escape") {
       closeSearchBox();
     }
-  };
-
-  const handleSuggestionClick = (suggestionQuery) => {
-    setSearchQuery(suggestionQuery);
-    handleSearch(suggestionQuery);
-    closeSearchBox();
   };
 
   return (
@@ -87,7 +75,7 @@ const SearchBox = ({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            handleSearch();
+            handleSearch(searchQuery);
           }}
           className="flex items-center gap-2 p-2 shadow bg-secondary-bg dark:bg-secondary-bg-dark"
         >
@@ -106,7 +94,7 @@ const SearchBox = ({
               ref={searchBoxRef}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="w-full bg-transparent text-xl py-2 outline-none dark:text-white truncate"
+              className="w-full bg-transparent text-md py-2 outline-none dark:text-white truncate"
               placeholder="Search your fav songs"
               autoFocus
             />
@@ -116,9 +104,9 @@ const SearchBox = ({
             <button
               type="button"
               onClick={() => setSearchQuery("")}
-              className="text-white flex-shrink-0"
+              className="text-gray-400 hover:text-gray-300 px-4"
             >
-              <i className="fa fa-times text-2xl bg-red-500 px-3 py-2 mx-1 rounded-xl" />
+              Clear
             </button>
           )}
         </form>
@@ -130,7 +118,7 @@ const SearchBox = ({
               <button
                 key={index}
                 type="button"
-                onClick={() => handleSuggestionClick(item?.suggestionQuery)}
+                onClick={() => handleSearch(item?.suggestionQuery)}
                 className="flex items-center gap-4 w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-secondary-bg-dark rounded-md transition-colors"
               >
                 <i className="fa fa-search text-gray-400 flex-shrink-0" />
@@ -150,9 +138,8 @@ const SearchBox = ({
           <div className="flex justify-center items-center h-full">
             <SpeechDialog
               handleSearch={(val) => {
-                setSearchQuery(val);
-                onSearch(val);
-                closeSearchBox();
+                setSearchQuery(val)
+                handleSearch(val);
               }}
             />
           </div>

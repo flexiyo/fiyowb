@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Mic } from "lucide-react";
+import { Mic, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 const SpeechDialog = ({ handleSearch }) => {
@@ -7,6 +7,7 @@ const SpeechDialog = ({ handleSearch }) => {
   const [transcript, setTranscript] = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
   const [errorState, setErrorState] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const recognitionRef = useRef(null);
   const endTimeout = useRef(null);
@@ -26,10 +27,11 @@ const SpeechDialog = ({ handleSearch }) => {
 
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = "en-US";
+    recognition.lang = "en-IN";
 
     recognition.onresult = (event) => {
       clearTimeout(noSpeechTimeout.current);
+
       let final = "";
       let interim = "";
 
@@ -44,18 +46,24 @@ const SpeechDialog = ({ handleSearch }) => {
         setInterimTranscript(interim);
 
         if (final) {
-          setTranscript((prev) => prev + final);
-          handleSearch((prev) => prev + final);
+          setTranscript(final);
         }
 
+        setIsProcessing(true);
         clearTimeout(endTimeout.current);
-        endTimeout.current = setTimeout(() => stopListening(), 2500);
+        endTimeout.current = setTimeout(() => {
+          setIsProcessing(false);
+          if (final) {
+            handleSearch(final);
+          }
+          stopListening();
+        }, 2000);
       }
 
       noSpeechTimeout.current = setTimeout(() => {
         setErrorState(true);
         stopListening();
-      }, 6000);
+      }, 8000);
     };
 
     recognition.onerror = (e) => {
@@ -85,11 +93,12 @@ const SpeechDialog = ({ handleSearch }) => {
       setInterimTranscript("");
       setIsListening(true);
       setErrorState(false);
+      setIsProcessing(false);
 
       noSpeechTimeout.current = setTimeout(() => {
         setErrorState(true);
         stopListening();
-      }, 6000);
+      }, 8000);
     } catch (err) {
       console.warn("Recognition start error:", err);
     }
@@ -98,6 +107,7 @@ const SpeechDialog = ({ handleSearch }) => {
   const stopListening = () => {
     recognitionRef.current?.stop();
     setIsListening(false);
+    setIsProcessing(false);
     setInterimTranscript("");
     clearTimeout(endTimeout.current);
     clearTimeout(noSpeechTimeout.current);
@@ -110,7 +120,7 @@ const SpeechDialog = ({ handleSearch }) => {
   return (
     <div className="w-full flex flex-col items-center gap-6 py-6">
       {/* Waves */}
-      {isListening && (
+      {isListening && !isProcessing && (
         <div className="relative">
           {[...Array(3)].map((_, i) => (
             <motion.div
@@ -129,7 +139,7 @@ const SpeechDialog = ({ handleSearch }) => {
                 width: "90px",
                 height: "90px",
                 left: "-50px",
-                top: "25px"
+                top: "25px",
               }}
             />
           ))}
@@ -139,19 +149,28 @@ const SpeechDialog = ({ handleSearch }) => {
       {/* Mic Button */}
       <div
         onClick={handleMicClick}
-        className={`w-24 h-24 relative z-10 cursor-pointer bg-blue-600 flex items-center justify-center shadow-xl rounded-full ring-6 transition-all duration-300 mb-20 ${
-          errorState ? "ring-red-500" : "ring-transparent"
-        }`}
+        className={`w-24 h-24 relative z-10 cursor-pointer flex items-center justify-center shadow-xl rounded-full ring-6 transition-all duration-300 mb-10
+          ${
+            errorState
+              ? "ring-red-500"
+              : isProcessing
+              ? "ring-yellow-500 animate-pulse"
+              : "ring-transparent"
+          }
+          ${isListening ? "bg-blue-600" : "bg-gray-500"}
+        `}
       >
-        <Mic className="w-8 h-8 text-white" />
+        {isProcessing ? (
+          <Loader2 className="w-8 h-8 text-white animate-spin" />
+        ) : (
+          <Mic className="w-8 h-8 text-white" />
+        )}
       </div>
 
       {/* Transcript Output */}
-      <div className="w-full text-center px-4 min-h-[40px]">
+      <div className="w-full text-center px-4 min-h-[40px] mb-30">
         {errorState ? (
-          <p className="text-red-500 text-lg">
-            Couldn't Capture. Try Again.
-          </p>
+          <p className="text-red-500 text-lg">Couldn't Capture. Try Again.</p>
         ) : transcript || interimTranscript ? (
           <p className="text-gray-800 dark:text-gray-200 text-xl font-bold leading-relaxed">
             {transcript}
@@ -159,10 +178,12 @@ const SpeechDialog = ({ handleSearch }) => {
             <span className="inline-block w-1 h-6 ml-1 bg-blue-500 animate-pulse rounded" />
           </p>
         ) : isListening ? (
-          <p className="text-gray-500 dark:text-gray-400 text-xl">Listening...</p>
+          <p className="text-gray-400 text-lg">
+            Listening...
+          </p>
         ) : (
           <p className="text-gray-400 text-lg">Click the mic to speak</p>
-        )}
+        )}  
       </div>
     </div>
   );

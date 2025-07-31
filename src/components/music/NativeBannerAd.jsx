@@ -22,7 +22,7 @@ const NativeBannerAd = () => {
     <div className="w-full my-4 flex justify-center">
       <div
         id="container-25ffcd5a2f328754c0caef5eb753c5f9"
-        className="h-18"
+        className="h-20 overflow-y-auto"
       ></div>
     </div>
   );

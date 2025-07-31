@@ -32,6 +32,7 @@ const PlayerStack = () => {
         <Dialog.Root open={isTrackDeckOpen} onOpenChange={setIsTrackDeckOpen}>
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 bg-black/70 backdrop-blur-md transition-opacity" />
+            <Dialog.DialogTitle hidden />
             <Dialog.Content className="fixed bottom-0 left-0 w-full h-full bg-primary-bg dark:bg-primary-bg-dark rounded-t-2xl shadow-lg z-50 text-white font-SpotifyMedium">
               <motion.div
                 drag="y"
@@ -46,6 +47,7 @@ const PlayerStack = () => {
                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
                 className="flex flex-col h-full"
               >
+                <Dialog.Description hidden />
                 <div className="w-12 h-1.5 bg-white/50 rounded-full mx-auto mt-4 mb-2" />
                 <div className="flex justify-between items-center px-8 py-6">
                   <h2 className="text-lg font-semibold">Now Playing</h2>

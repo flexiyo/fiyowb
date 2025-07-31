@@ -1,8 +1,7 @@
-import React, { memo, useContext, useState, useCallback } from "react";
+import { memo, useContext, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowDownCircle } from "lucide-react";
 import MusicContext from "../../context/items/MusicContext";
-import NativeBannerAd from "./NativeBannerAd";
 
 // ----------------- TrackItem -----------------
 const TrackItem = memo(({ track, loading }) => {
@@ -245,10 +244,7 @@ const TrackList = memo(({ tracks = [], loading, ref, onScrollEnd }) => {
       {tracks.length > 0 ? (
         <>
           {tracks.map((track, index) => (
-            <React.Fragment key={track?.videoId}>
-              <TrackItem track={track} loading={loading} />
-              {(index + 1) % 5 === 0 && <NativeBannerAd />}
-            </React.Fragment>
+            <TrackItem key={index} track={track} loading={loading} />
           ))}
 
           {loading &&

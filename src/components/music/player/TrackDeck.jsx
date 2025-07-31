@@ -34,7 +34,7 @@ const TrackDeck = () => {
         <img
           src={currentTrack?.image}
           alt="Track Cover"
-          className="w-full h-full aspect-square border-none rounded-xl bg-secondary-bg dark:bg-secondary-bg-dark"
+          className="w-full h-full aspect-square border-none rounded-xl bg-secondary-bg dark:bg-secondary-bg-dark object-cover"
         />
         <div className="flex flex-col items-start justify-start w-full px-2 pt-4 gap-2">
           <span className="text-2xl line-clamp-2">{currentTrack?.title}</span>
@@ -102,7 +102,7 @@ const TrackDeck = () => {
       </div>
       <NativeBannerAd />
       <div
-        className="flex flex-col justify-center rounded-xl mt-4 p-4 w-full bg-secondary-bg dark:bg-secondary-bg-dark gap-4"
+        className="flex flex-col justify-center rounded-xl p-4 w-full bg-secondary-bg dark:bg-secondary-bg-dark gap-4"
         ref={lyricsRef}
       >
         <h2 className="text-2xl">Lyrics</h2>

@@ -152,7 +152,7 @@ const Music = () => {
   }, [isSearchBoxActive, isAudioPlaying, audioProgress]);
 
   const handleTrackListScrollEnd = () => {
-    if (tracks?.length < 60 && continuation) {
+    if (tracks?.length < 40 && continuation) {
       searchTracks(searchQuery, continuation).then((tracks) => {
         setTracks((prevTracks) => [...prevTracks, ...tracks]);
       });
