@@ -1,7 +1,6 @@
 {
   "hosting": {
     "public": "dist",
-    "target": "flexiyo",
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -9,9 +8,33 @@
     ],
     "rewrites": [
       {
+        "source": "/music/**",
+        "function": "seo"
+      },
+      {
+        "source": "/u/**",
+        "function": "seo"
+      },
+      {
+        "source": "/sitemap.xml",
+        "function": "seo"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
     ]
+  },
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs22"
+  },
+  "emulators": {
+    "functions": {
+      "port": 5001
+    },
+    "hosting": {
+      "port": 5000
+    }
   }
 }

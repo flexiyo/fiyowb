@@ -1,3 +1,39 @@
-# https://www.robotstxt.org/robotstxt.html
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: Discordbot
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Google-InspectionTool
+Allow: /
+
+User-agent: embed
+Allow: /
+
+# Optional: disallow all other bots not listed explicitly
 User-agent: *
-Disallow:
+Disallow: /

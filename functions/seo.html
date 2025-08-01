@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Charset & Mobile -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+  <!-- Title & Description -->
+  <title>{{page_title}}</title>
+  <meta name="description" content="{{page_description}}" />
+  <meta name="keywords" content="{{page_keywords}}" />
+  <meta name="author" content="{{page_author}}" />
+
+  <!-- Canonical & Robots -->
+  <link rel="canonical" href="{{canonical_url}}" />
+  <meta name="robots" content="index, follow" />
+
+  <!-- Favicons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="theme-color" content="#ffffff" />
+
+  <!-- Open Graph (Facebook / LinkedIn) -->
+  <meta property="og:title" content="{{og_title}}" />
+  <meta property="og:description" content="{{og_description}}" />
+  <meta property="og:image" content="{{og_image}}" />
+  <meta property="og:url" content="{{canonical_url}}" />
+  <meta property="og:type" content="{{og_type}}" />
+
+  <!-- Twitter Cards -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="{{twitter_title}}" />
+  <meta name="twitter:description" content="{{twitter_description}}" />
+  <meta name="twitter:image" content="{{twitter_image}}" />
+  <meta name="twitter:creator" content="@{{twitter_handle}}" />
+
+  <!-- Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "{{schema_type}}",
+      "name": "{{schema_title}}",
+      "description": "{{schema_description}}",
+      "url": "{{canonical_url}}",
+      "author": {
+        "@type": "Person",
+        "name": "{{page_author}}"
+      },
+      {{#if schema_type == "MusicRecording"}}
+      "byArtist": {
+        "@type": "MusicGroup",
+        "name": "{{artist_name}}"
+      }
+      {{/if}}
+    }
+  </script>
+
+  <!-- Optional Custom Styles -->
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      color: #111;
+    }
+  </style>
+</head>
+<body>
+  <h1>{{page_title}}</h1>
+  <p>{{page_description}}</p>
+  <p><strong>Author:</strong> {{page_author}}</p>
+</body>
+</html>
