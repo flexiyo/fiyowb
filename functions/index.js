@@ -1,5 +1,4 @@
 import app from './app.js'
-import seoHTML from './seo.html?raw'
 
 function isBot(ua = '') {
   return /bot|crawl|spider|facebook|twitter|discord|preview/i.test(ua)
