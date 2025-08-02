@@ -34,6 +34,5 @@ Allow: /
 User-agent: embed
 Allow: /
 
-# Optional: disallow all other bots not listed explicitly
 User-agent: *
 Disallow: /
