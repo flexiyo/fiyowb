@@ -1,6 +1,6 @@
 // index.js
 import { Hono } from 'hono'
-import ytMusicRoutes from './handlers/ytmusic.handler.js'
+import ytMusicRoutes from './routes/ytmusic.routes.js'
 
 const app = new Hono()
 
