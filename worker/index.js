@@ -10,10 +10,6 @@ function isBot(ua = "") {
 
 const seoRoutes = [
   {
-    pattern: /^\/music\/sitemap\.xml$/,
-    handler: sitemapSeo.fetch,
-  },
-  {
     pattern: /^\/music\/([^/]+)$/,
     handler: musicSeo.fetch,
   },
@@ -24,7 +20,7 @@ const seoRoutes = [
   {
     pattern: /^\/u\/([\w-]+)$/,
     handler: userSeo.fetch,
-  }
+  },
 ];
 
 export default {
@@ -35,6 +31,10 @@ export default {
 
     if (pathname.startsWith("/api")) {
       return app.fetch(request, env, ctx);
+    }
+
+    if (pathname.startsWith("/music/sitemap.xml")) {
+      return sitemapSeo.fetch(request, env, ctx);
     }
 
     if (isBot(ua)) {
