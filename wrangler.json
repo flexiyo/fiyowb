@@ -2,10 +2,6 @@
   "name": "flexiyo",
   "compatibility_date": "2025-08-02",
   "pages_build_output_dir": "dist",
-  "assets": {
-    "binding": "client",
-    "directory": "./dist"
-  },
   "kv_namespaces": [
     {
       "binding": "YTMUSIC_SITEMAP_KV",
