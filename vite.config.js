@@ -2,14 +2,12 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
-import { cloudflare } from "@cloudflare/vite-plugin";
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    cloudflare(),
     VitePWA({
       registerType: "autoUpdate",
       manifest: {
@@ -34,9 +32,6 @@ export default defineConfig({
       },
     }),
   ],
-  ssr: {
-    noExternal: ["hono"],
-  },
   base: "/",
   server: {
     port: 3000,

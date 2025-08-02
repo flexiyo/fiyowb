@@ -436,6 +436,7 @@ function wrapInSitemap(entries) {
  * Handles the /sitemap.xml request.
  */
 export async function handleSitemap(env) {
+  console.log(env)
   const kvStore = env.YTMUSIC_SITEMAP_KV;
   const staticSitemap = await kvStore.get(STATIC_SITEMAP_KEY);
   const staticTimestamp = await kvStore.get(STATIC_SITEMAP_TIMESTAMP_KEY);

@@ -1,4 +1,4 @@
-import htmlTemplate from "../../index.html";
+import htmlTemplate from "../../../index.html";
 
 function injectSSR(html) {
   const seoHtml = `
@@ -27,12 +27,10 @@ function injectSSR(html) {
   );
 }
 
-export default {
-  async fetch() {
-    const fullHtml = injectSSR(htmlTemplate);
+export default async function fallbackSeo() {
+  const fullHtml = injectSSR(htmlTemplate);
 
-    return new Response(fullHtml, {
-      headers: { "Content-Type": "text/html; charset=utf-8" },
-    });
-  },
-};
+  return new Response(fullHtml, {
+    headers: { "Content-Type": "text/html; charset=utf-8" },
+  });
+}
