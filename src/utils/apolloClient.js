@@ -94,7 +94,11 @@ const errorLink = new ApolloLink((operation, forward) => {
 });
 
 const client = new ApolloClient({
-  link: from([authLink, errorLink, httpLink]),
+  ssrMode: true,
+  link: new HttpLink({
+    uri: FIYOGQL_BASE_URI,
+    fetch,
+  }),
   cache: new InMemoryCache(),
 });
 

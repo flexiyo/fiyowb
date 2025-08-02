@@ -1,5 +1,4 @@
-import React from "react";
-import flexiyoLogo from "../../assets/images/flexiyo.png"
+import flexiyoLogo from "/logo192.png"
 
 const LoadingScreen = () => {
   const width = window.innerWidth;

@@ -6,7 +6,6 @@ import {
   getNextTrackData,
   getTrackLyricsData,
   getSuggestionsData,
-  handleSitemap
 } from '../lib/ytmusic.js'
 
 const ytMusicRoutes = new Hono()
@@ -53,11 +52,6 @@ ytMusicRoutes.get('/suggestions', async (c) => {
 
   const data = await getSuggestionsData(term)
   return c.json({ success: true, data })
-})
-
-ytMusicRoutes.get('/sitemap', async (c) => {
-  const xml = await handleSitemap(c.env)
-  return new Response(xml, { headers: { 'Content-Type': 'application/xml' } })
 })
 
 export default ytMusicRoutes

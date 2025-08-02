@@ -210,7 +210,7 @@ export async function getTrackData(videoId, env, ssr) {
     playsCount;
 
   // fetch initial YT page
-  const response = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+  const response = await fetch(`https://music.youtube.com/watch?v=${videoId}`, {
     headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
   });
   const html = await response.text();
@@ -387,7 +387,7 @@ const STATIC_THRESHOLD = 25;
 function generateUrlEntry(slug, date) {
   return `
     <url>
-      <loc>https://flexiyo.web.app/music/${slug}</loc>
+      <loc>https://flexiyo.pages.dev/music/${slug}</loc>
       <lastmod>${date}</lastmod>
       <changefreq>weekly</changefreq>
       <priority>0.8</priority>

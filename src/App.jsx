@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import { useContext } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import AppContext from "./context/items/AppContext";
 import UserContext from "./context/items/UserContext";
@@ -25,7 +25,6 @@ import {
  * auth: "both" = accessible to all.
  */
 const routesConfig = [
-
   { path: "/", element: <Home />, auth: true },
   { path: "/search", element: <Search />, auth: true },
   { path: "/clips", element: <Clips />, auth: true },
@@ -36,16 +35,13 @@ const routesConfig = [
   { path: "/direct/inbox", element: <ChatStack />, auth: true },
   { path: "/create", element: <Create />, auth: true },
 
-
   { path: "/auth/login", element: <AuthLogin />, auth: false },
   { path: "/auth/signup", element: <AuthSignup />, auth: false },
-
 
   { path: "/music", element: <Music />, auth: "both" },
   { path: "/music/:slug", element: <Music />, auth: "both" },
   { path: "/clips", element: <Clips />, auth: "both" },
   { path: "/u/:username", element: <Profile />, auth: "both" },
-
 
   { path: "*", element: <NotFound404 />, auth: "both" },
 ];
@@ -77,7 +73,7 @@ function matchesPattern(pattern, path) {
   return regex.test(path);
 }
 
-function App({ initialData }) {
+function App() {
   const location = useLocation();
   const { isAppLoading } = useContext(AppContext);
   const { isUserAuthenticated, loading } = useContext(UserContext);
@@ -86,7 +82,9 @@ function App({ initialData }) {
     return <LoadingScreen />;
   }
 
-  const filteredRoutes = routesConfig.filter(getRoutesForAuth(isUserAuthenticated));
+  const filteredRoutes = routesConfig.filter(
+    getRoutesForAuth(isUserAuthenticated)
+  );
 
   const isNoPadding = noPaddingRoutePatterns.some((pattern) =>
     matchesPattern(pattern, location.pathname)

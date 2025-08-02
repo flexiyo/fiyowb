@@ -88,8 +88,17 @@ const useMusicUtils = ({
         throw new Error("Missing tS or tH in track response");
       }
 
-      const { slug, title, artists, images, duration, playlistId, browseId, tS, tH } =
-        trackData;
+      const {
+        slug,
+        title,
+        artists,
+        images,
+        duration,
+        playlistId,
+        browseId,
+        tS,
+        tH,
+      } = trackData;
 
       const linksResponse = await fetch(
         `https://www.genyt.net/getLinks.php?vid=${videoId}&s=${tS}&h=${tH}`
@@ -115,7 +124,7 @@ const useMusicUtils = ({
         slug,
         title,
         artists,
-        image: images?.[3]?.url || null,
+        image: images?.[3]?.url,
         duration,
         urls,
         playlistId,

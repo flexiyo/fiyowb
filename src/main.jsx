@@ -1,15 +1,10 @@
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import { BrowserRouter } from "react-router-dom";
-import { ApolloClient, InMemoryCache, ApolloProvider } from "@apollo/client";
+import { ApolloProvider } from "@apollo/client";
 import ContextProviders from "./context/ContextProviders";
+import client from "./utils/apolloClient.js";
 import App from "./App";
-import { FIYOGQL_BASE_URI } from "./constants.js";
-
-const client = new ApolloClient({
-  uri: FIYOGQL_BASE_URI,
-  cache: new InMemoryCache(),
-});
 
 if (import.meta.env.VITE_ENV === "production") {
   console.error = () => {};
@@ -20,12 +15,12 @@ if (import.meta.env.VITE_ENV === "production") {
 
 createRoot(document.getElementById("root")).render(
   // <React.StrictMode>
-  <ApolloProvider client={client}>
-    <ContextProviders>
-      <BrowserRouter>
+  <BrowserRouter>
+    <ApolloProvider client={client}>
+      <ContextProviders>
         <App />
-      </BrowserRouter>
-    </ContextProviders>
-  </ApolloProvider>
+      </ContextProviders>
+    </ApolloProvider>
+  </BrowserRouter>
   // </React.StrictMode>
 );
