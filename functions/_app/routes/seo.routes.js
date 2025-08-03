@@ -7,12 +7,11 @@ import {
 const seoRoutes = new Hono();
 
 seoRoutes.get('/music/:slug', (c) => {
-  return renderMusicPage(c.req.raw, c.env);
+  return renderMusicPage(c.req.raw, c.env, c.executionCtx);
 });
 
 seoRoutes.get('/u/:username', (c) => {
-  return renderUserPage(c.req.raw, c.env);
+  return renderUserPage(c.req.raw, c.env, c.executionCtx);
 });
-
 
 export default seoRoutes;
