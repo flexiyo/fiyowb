@@ -1,24 +1,22 @@
-
 import { getTrackData } from "./ytmusic.lib.js";
 import { renderSeoPage } from "./renderSeoPage.js";
 import seoTemplate from "../seoTemplate.html";
 
 // MUSIC SSR PAGE
-export async function renderMusicPage(request, env) {
-  const url = new URL(request.url);
-  const slug = url.pathname.split("/music/")[1];
+export async function renderMusicPage(slug, env) {
   const videoId = slug?.split("_").pop();
 
-  if (!videoId)
+  if (!videoId) {
     return new Response("Invalid URL: Video ID not found.", { status: 400 });
+  }
 
   try {
     const trackData = await getTrackData(videoId, env, true);
-    if (!trackData || !trackData.title)
+    if (!trackData || !trackData.videoId) {
       return new Response("Track data not found.", { status: 404 });
+    }
 
-    const { title, artists, keywords, duration, playsCount, images } =
-      trackData;
+    const { title, artists, keywords, duration, playsCount, images } = trackData;
 
     const canonical = `https://flexiyo.pages.dev/music/${slug}`;
     const image = images?.[2]?.url || "";
@@ -47,11 +45,15 @@ export async function renderMusicPage(request, env) {
       og_type: "music.song",
       twitter_handle: "x_flexiyo",
       structured_data: jsonLD,
-      content_block: `<p><strong>Duration:</strong> ${duration}</p><p><strong>Plays:</strong> ${playsCount}</p>${
-        image
-          ? `<figure><img src="${image}" alt="${title}" loading="lazy" /></figure>`
-          : ""
-      }`,
+      content_block: `
+        <p><strong>Duration:</strong> ${duration}</p>
+        <p><strong>Plays:</strong> ${playsCount}</p>
+        ${
+          image
+            ? `<figure><img src="${image}" alt="${title}" loading="lazy" /></figure>`
+            : ""
+        }
+      `,
     });
 
     return new Response(html, {
@@ -69,27 +71,27 @@ export async function renderMusicPage(request, env) {
 }
 
 // USER SSR PAGE
-export async function renderUserPage(request, env) {
-  const url = new URL(request.url);
-  const username = url.pathname.split("/u/")[1];
-  if (!username) return new Response("Username missing", { status: 400 });
+export async function renderUserPage(username, env) {
+  if (!username) {
+    return new Response("Username missing", { status: 400 });
+  }
 
   try {
     const headers = {
       "User-Agent": "Flexiyo-SEO-Bot",
       Accept: "application/vnd.github.v3+json",
     };
-    if (env.GITHUB_API_TOKEN)
-      headers["Authorization"] = `token ${env.GITHUB_API_TOKEN}`;
 
     const res = await fetch(`https://api.github.com/users/${username}`, {
       headers,
     });
 
-    if (res.status === 404)
+    if (res.status === 404) {
       return new Response("User not found", { status: 404 });
-    if (!res.ok)
+    }
+    if (!res.ok) {
       throw new Error(`GitHub API failed with status: ${res.status}`);
+    }
 
     const user = await res.json();
     const canonical = `https://flexiyo.pages.dev/u/${username}`;
@@ -113,7 +115,7 @@ export async function renderUserPage(request, env) {
     });
 
     const html = renderSeoPage(seoTemplate, {
-      title: `${user.name || user.login} (@${user.login}) - Flexiyo Profile`,
+      title: `${user.name || user.login} (@${user.login}) - Flexiyo`,
       description: `${user.followers} Followers | ${
         user.public_repos
       } Repositories. View the profile of ${
@@ -126,11 +128,16 @@ export async function renderUserPage(request, env) {
       og_type: "profile",
       twitter_handle: user.twitter_username || "",
       structured_data: jsonLD,
-      content_block: `${
-        image
-          ? `<img src="${image}" width="120" alt="${user.login}" loading="lazy" />`
-          : ""
-      }<p><strong>Followers:</strong> ${user.followers.toLocaleString()}</p><p><strong>Following:</strong> ${user.following.toLocaleString()}</p><p><strong>Public Repos:</strong> ${user.public_repos.toLocaleString()}</p>`,
+      content_block: `
+        ${
+          image
+            ? `<img src="${image}" width="120" alt="${user.login}" loading="lazy" />`
+            : ""
+        }
+        <p><strong>Followers:</strong> ${user.followers.toLocaleString()}</p>
+        <p><strong>Following:</strong> ${user.following.toLocaleString()}</p>
+        <p><strong>Public Repos:</strong> ${user.public_repos.toLocaleString()}</p>
+      `,
     });
 
     return new Response(html, {
@@ -139,10 +146,10 @@ export async function renderUserPage(request, env) {
         "Cache-Control": "public, max-age=3600, s-maxage=86400",
       },
     });
-  } catch (e) {
-    console.error(`Failed to render user SEO page for "${username}":`, e);
+  } catch (error) {
+    console.error(`Failed to render user SEO page for "${username}":`, error);
     return new Response("An error occurred while generating the page.", {
       status: 500,
     });
   }
-    }
+}

@@ -5,9 +5,12 @@ import {
   getNextTrackData,
   getTrackLyricsData,
   getSuggestionsData,
+  handleSitemap
 } from "../lib/ytmusic.lib.js";
 
 const ytMusicRoutes = new Hono();
+
+ytMusicRoutes.get("/sitemap.xml", ({ env }) => handleSitemap(env));
 
 ytMusicRoutes.get("/search", async (c) => {
   const term = c.req.query("term");
@@ -28,14 +31,14 @@ ytMusicRoutes.get("/search", async (c) => {
 
 ytMusicRoutes.get("/track", async (c) => {
   const videoId = c.req.query("videoId");
-  const ssr = c.req.query("ssr");
+  const ssr = c.req.query("ssr") === "true";
 
   if (!videoId) {
     return c.json({ success: false, error: "Missing video ID" }, 400);
   }
 
   try {
-    const data = await getTrackData(videoId, c.env, ssr === "true");
+    const data = await getTrackData(videoId, c.env, ssr);
     return c.json({ success: true, data });
   } catch (error) {
     console.error(`Error fetching track ${videoId}:`, error);

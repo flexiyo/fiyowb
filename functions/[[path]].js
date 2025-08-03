@@ -1,7 +1,6 @@
 import { Hono } from "hono";
 import ytMusicRoutes from "./_app/routes/ytmusic.routes.js";
 import seoRoutes from "./_app/routes/seo.routes.js";
-import { handleSitemap } from "./_app/lib/ytmusic.lib.js";
 
 const app = new Hono();
 
@@ -33,52 +32,57 @@ app.use("/*", async (c, next) => {
   await next();
 });
 
-// --- Dynamic Sitemap ---
-app.get("/music_sitemap.xml", async ({ env }) => {
-  const sitemapXml = await handleSitemap(env);
-  return new Response(sitemapXml, {
-    headers: {
-      "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=3600, s-maxage=86400",
-    },
-  });
-});
-
 // --- API Routes ---
 app.route("/api/ytmusic", ytMusicRoutes);
 
-// --- Allowed Bot List (for SEO SSR only) ---
-const allowedBots = [
-  "Googlebot",
-  "Bingbot",
-  "YandexBot",
-  "Applebot",
-  "LinkedInBot",
-  "facebookexternalhit",
-  "Twitterbot",
-  "Discordbot",
-  "GPTBot",
-  "DuckDuckBot",
-  "Google-InspectionTool",
+// --- Bot Detection (broad + accurate) ---
+const botKeywords = [
+  "bot",
+  "crawl",
+  "slurp",
+  "spider",
   "embed",
+  "preview",
+  "fetch",
+  "scan",
+  "render",
+  "monitor",
+  "scrape",
+  "linkexpander",
+  "google",
+  "facebook",
+  "twitter",
+  "discord",
+  "linkedin",
+  "whatsapp",
+  "telegram",
+  "pinterest",
+  "gptbot",
+  "duckduck",
+  "yandex",
+  "applebot",
+  "bingbot",
+  "redditbot",
+  "vkshare",
 ];
 
-function isAllowedBot(userAgent = "") {
-  return allowedBots.some(bot => userAgent.includes(bot));
+function isBot(userAgent = "") {
+  const ua = userAgent.toLowerCase();
+  return botKeywords.some((keyword) => ua.includes(keyword));
 }
 
-// --- Request Handler Entry Point ---
+// --- Entry Point Handler ---
 export const onRequest = async ({ request, env, context }) => {
   const userAgent = request.headers.get("User-Agent") || "";
 
-  // Enable SSR only for approved bots
-  if (isAllowedBot(userAgent)) {
-    app.route("/", seoRoutes); // Inject SEO routes only for bots
+  // Inject SEO routes for bots (SSR for crawlers & previewers)
+  if (isBot(userAgent)) {
+    app.route("/", seoRoutes);
   }
 
   const response = await app.fetch(request, env, context);
 
-  // Fallback to asset handler for 404s (e.g., SPA fallback)
+  // 404 fallback: Serve from static ASSETS (for SPA)
   if (response.status === 404) {
     return env.ASSETS.fetch(request);
   }

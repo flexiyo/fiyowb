@@ -6,12 +6,16 @@ import {
 
 const seoRoutes = new Hono();
 
-seoRoutes.get('/music/:slug', (c) => {
-  return renderMusicPage(c.req.raw, c.env);
+// SEO music page route
+seoRoutes.get('/music/:slug', async (c) => {
+  const slug = c.req.param('slug');
+  return await renderMusicPage(slug, c.env);
 });
 
-seoRoutes.get('/u/:username', (c) => {
-  return renderUserPage(c.req.raw, c.env);
+// SEO user profile page route
+seoRoutes.get('/u/:username', async (c) => {
+  const username = c.req.param('username');
+  return await renderUserPage(username, c.env);
 });
 
 export default seoRoutes;
