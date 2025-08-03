@@ -85,38 +85,3 @@ export const onRequest = async ({ request, env, context }) => {
 
   return response;
 };
-// Music Sitemap
-app.get("/music_sitemap.xml", async ({ env }) => {
-  const sitemapXml = await handleSitemap(env);
-  return new Response(sitemapXml, {
-    headers: {
-      "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=3600, s-maxage=86400",
-    },
-  });
-});
-
-// API
-app.route("/api/ytmusic", ytMusicRoutes);
-
-// Detect bots
-function isBot(userAgent = "") {
-  return /bot|crawl|spider|facebook|twitter|discord|preview/i.test(userAgent);
-}
-
-// Request handler
-export const onRequest = async ({ request, env, context }) => {
-  const userAgent = request.headers.get("User-Agent") || "";
-
-  if (isBot(userAgent)) {
-    app.route("/", seoRoutes);
-  }
-
-  const response = await app.fetch(request, env, context);
-
-  if (response.status === 404) {
-    return env.ASSETS.fetch(request);
-  }
-
-  return response;
-};
