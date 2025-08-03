@@ -32,57 +32,15 @@ app.use("/*", async (c, next) => {
   await next();
 });
 
+app.route("/", seoRoutes);
+
 // --- API Routes ---
 app.route("/api/ytmusic", ytMusicRoutes);
 
-// --- Bot Detection (broad + accurate) ---
-const botKeywords = [
-  "bot",
-  "crawl",
-  "slurp",
-  "spider",
-  "embed",
-  "preview",
-  "fetch",
-  "scan",
-  "render",
-  "monitor",
-  "scrape",
-  "linkexpander",
-  "google",
-  "facebook",
-  "twitter",
-  "discord",
-  "linkedin",
-  "whatsapp",
-  "telegram",
-  "pinterest",
-  "gptbot",
-  "duckduck",
-  "yandex",
-  "applebot",
-  "bingbot",
-  "redditbot",
-  "vkshare",
-];
-
-function isBot(userAgent = "") {
-  const ua = userAgent.toLowerCase();
-  return botKeywords.some((keyword) => ua.includes(keyword));
-}
-
-// --- Entry Point Handler ---
+// --- Entry Point ---
 export const onRequest = async ({ request, env, context }) => {
-  const userAgent = request.headers.get("User-Agent") || "";
-
-  // Inject SEO routes for bots (SSR for crawlers & previewers)
-  if (isBot(userAgent)) {
-    app.route("/", seoRoutes);
-  }
-
   const response = await app.fetch(request, env, context);
 
-  // 404 fallback: Serve from static ASSETS (for SPA)
   if (response.status === 404) {
     return env.ASSETS.fetch(request);
   }
