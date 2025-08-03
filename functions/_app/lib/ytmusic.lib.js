@@ -462,7 +462,7 @@ async function buildDynamicSitemap(kvStore) {
 }
 
 export async function handleSitemap(env) {
-  const kvStore = env.YTMUSIC_SITEMAP_KV;
+  const kvStore = env.FIYOWB_MUSIC_SITEMAP;
   const [staticSitemap, staticTimestamp] = await Promise.all([
     kvStore.get(STATIC_SITEMAP_KEY),
     kvStore.get(STATIC_SITEMAP_TIMESTAMP_KEY),
