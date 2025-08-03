@@ -1,15 +1,14 @@
+
 import { getTrackData } from "./ytmusic.lib.js";
 import { renderSeoPage } from "./renderSeoPage.js";
 import seoTemplate from "../seoTemplate.html";
 
-export async function renderMusicPage(request, env, context) {
+// MUSIC SSR PAGE
+export async function renderMusicPage(request, env) {
   const url = new URL(request.url);
-  const cache = caches.default;
-  const cachedResponse = await cache.match(request);
-  if (cachedResponse) return cachedResponse;
-
   const slug = url.pathname.split("/music/")[1];
   const videoId = slug?.split("_").pop();
+
   if (!videoId)
     return new Response("Invalid URL: Video ID not found.", { status: 400 });
 
@@ -55,18 +54,12 @@ export async function renderMusicPage(request, env, context) {
       }`,
     });
 
-    const response = new Response(html, {
+    return new Response(html, {
       headers: {
         "Content-Type": "text/html; charset=utf-8",
         "Cache-Control": "public, max-age=3600, s-maxage=86400",
       },
     });
-
-    if (context?.waitUntil) {
-      context.waitUntil(cache.put(request, response.clone()));
-    }
-
-    return response;
   } catch (error) {
     console.error(`Failed to render SSR page for videoId ${videoId}:`, error);
     return new Response("Failed to render page. Please try again later.", {
@@ -75,12 +68,9 @@ export async function renderMusicPage(request, env, context) {
   }
 }
 
-export async function renderUserPage(request, env, context) {
+// USER SSR PAGE
+export async function renderUserPage(request, env) {
   const url = new URL(request.url);
-  const cache = caches.default;
-  const cachedResponse = await cache.match(request);
-  if (cachedResponse) return cachedResponse;
-
   const username = url.pathname.split("/u/")[1];
   if (!username) return new Response("Username missing", { status: 400 });
 
@@ -143,22 +133,16 @@ export async function renderUserPage(request, env, context) {
       }<p><strong>Followers:</strong> ${user.followers.toLocaleString()}</p><p><strong>Following:</strong> ${user.following.toLocaleString()}</p><p><strong>Public Repos:</strong> ${user.public_repos.toLocaleString()}</p>`,
     });
 
-    const response = new Response(html, {
+    return new Response(html, {
       headers: {
         "Content-Type": "text/html; charset=utf-8",
         "Cache-Control": "public, max-age=3600, s-maxage=86400",
       },
     });
-
-    if (context?.waitUntil) {
-      context.waitUntil(cache.put(request, response.clone()));
-    }
-
-    return response;
   } catch (e) {
     console.error(`Failed to render user SEO page for "${username}":`, e);
     return new Response("An error occurred while generating the page.", {
       status: 500,
     });
   }
-}
+    }
