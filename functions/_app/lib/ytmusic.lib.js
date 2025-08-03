@@ -304,8 +304,8 @@ export async function getTrackData(videoId, env, ssr) {
 
   const slug = `${baseSlug}_${videoId}`;
 
-  if (env?.YTMUSIC_SITEMAP_KV) {
-    env.YTMUSIC_SITEMAP_KV.put(
+  if (env?.FIYOWB_MUSIC_SITEMAP) {
+    env.FIYOWB_MUSIC_SITEMAP.put(
       `${videoId}`,
       JSON.stringify({
         slug, playedAt
