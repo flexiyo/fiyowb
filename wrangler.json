@@ -4,8 +4,8 @@
   "pages_build_output_dir": "dist",
   "kv_namespaces": [
     {
-      "binding": "YTMUSIC_SITEMAP_KV",
-      "id": "f9dd3de5bd0e45cf96a5158cd1c56a9c"
+      "binding": "FIYOWB_MUSIC_SITEMAP",
+      "id": "3c8853399b184fb7a6de5ad97a24e035"
     }
   ],
   "dev": {
