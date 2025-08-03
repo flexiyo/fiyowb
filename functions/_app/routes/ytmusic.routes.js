@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { cache } from "hono/cache";
 import {
   searchTracksInternal,
   getTrackData,
@@ -11,7 +10,9 @@ import {
 const ytMusicRoutes = new Hono();
 
 ytMusicRoutes.get("/search", async (c) => {
-  const { term, continuation } = c.req.query();
+  const term = c.req.query("term");
+  const continuation = c.req.query("continuation");
+
   if (!term && !continuation) {
     return c.json({ success: false, error: "Missing search term" }, 400);
   }
@@ -25,29 +26,31 @@ ytMusicRoutes.get("/search", async (c) => {
   }
 });
 
-ytMusicRoutes.get(
-  "/track",
-  async (c) => {
-    const { videoId, ssr } = c.req.query();
-    if (!videoId) {
-      return c.json({ success: false, error: "Missing video ID" }, 400);
-    }
+ytMusicRoutes.get("/track", async (c) => {
+  const videoId = c.req.query("videoId");
+  const ssr = c.req.query("ssr");
 
-    try {
-      const data = await getTrackData(videoId, c.env, ssr);
-      return c.json({ success: true, data });
-    } catch (error) {
-      console.error(`Error fetching track ${videoId}:`, error);
-      return c.json(
-        { success: false, error: "Failed to fetch track data" },
-        500
-      );
-    }
+  if (!videoId) {
+    return c.json({ success: false, error: "Missing video ID" }, 400);
   }
-);
+
+  try {
+    const data = await getTrackData(videoId, c.env, ssr === "true");
+    return c.json({ success: true, data });
+  } catch (error) {
+    console.error(`Error fetching track ${videoId}:`, error);
+    return c.json(
+      { success: false, error: "Failed to fetch track data" },
+      500
+    );
+  }
+});
 
 ytMusicRoutes.get("/next", async (c) => {
-  const { videoId, playlistId, playedTrackIds } = c.req.query();
+  const videoId = c.req.query("videoId");
+  const playlistId = c.req.query("playlistId");
+  const playedTrackIds = c.req.query("playedTrackIds");
+
   if (!videoId || !playlistId) {
     return c.json(
       { success: false, error: "Missing videoId or playlistId" },
@@ -65,7 +68,8 @@ ytMusicRoutes.get("/next", async (c) => {
 });
 
 ytMusicRoutes.get("/lyrics", async (c) => {
-  const { browseId } = c.req.query();
+  const browseId = c.req.query("browseId");
+
   if (!browseId) {
     return c.json({ success: false, error: "Missing browse ID" }, 400);
   }
@@ -80,7 +84,8 @@ ytMusicRoutes.get("/lyrics", async (c) => {
 });
 
 ytMusicRoutes.get("/suggestions", async (c) => {
-  const { term } = c.req.query();
+  const term = c.req.query("term");
+
   if (!term) {
     return c.json({ success: false, error: "Missing term" }, 400);
   }
