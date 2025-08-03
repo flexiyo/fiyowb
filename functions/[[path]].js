@@ -5,9 +5,7 @@ import { handleSitemap } from "./_app/lib/ytmusic.lib.js";
 
 const app = new Hono();
 
-/**
- * CORS Middleware
- */
+// --- CORS Middleware ---
 app.use("/*", async (c, next) => {
   const origin = c.req.header("Origin") || "";
   const allowedOrigins = (
@@ -35,7 +33,59 @@ app.use("/*", async (c, next) => {
   await next();
 });
 
-// Sitemap
+// --- Dynamic Sitemap ---
+app.get("/music_sitemap.xml", async ({ env }) => {
+  const sitemapXml = await handleSitemap(env);
+  return new Response(sitemapXml, {
+    headers: {
+      "Content-Type": "application/xml; charset=utf-8",
+      "Cache-Control": "public, max-age=3600, s-maxage=86400",
+    },
+  });
+});
+
+// --- API Routes ---
+app.route("/api/ytmusic", ytMusicRoutes);
+
+// --- Allowed Bot List (for SEO SSR only) ---
+const allowedBots = [
+  "Googlebot",
+  "Bingbot",
+  "YandexBot",
+  "Applebot",
+  "LinkedInBot",
+  "facebookexternalhit",
+  "Twitterbot",
+  "Discordbot",
+  "GPTBot",
+  "DuckDuckBot",
+  "Google-InspectionTool",
+  "embed",
+];
+
+function isAllowedBot(userAgent = "") {
+  return allowedBots.some(bot => userAgent.includes(bot));
+}
+
+// --- Request Handler Entry Point ---
+export const onRequest = async ({ request, env, context }) => {
+  const userAgent = request.headers.get("User-Agent") || "";
+
+  // Enable SSR only for approved bots
+  if (isAllowedBot(userAgent)) {
+    app.route("/", seoRoutes); // Inject SEO routes only for bots
+  }
+
+  const response = await app.fetch(request, env, context);
+
+  // Fallback to asset handler for 404s (e.g., SPA fallback)
+  if (response.status === 404) {
+    return env.ASSETS.fetch(request);
+  }
+
+  return response;
+};
+// Music Sitemap
 app.get("/music_sitemap.xml", async ({ env }) => {
   const sitemapXml = await handleSitemap(env);
   return new Response(sitemapXml, {
