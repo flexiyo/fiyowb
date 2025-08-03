@@ -53,6 +53,7 @@ const SearchBox = ({
 
     setSearchSuggestions([]);
     onSearch(query);
+    setSearchQuery(query)
     closeSearchBox();
   };
 
