@@ -1,7 +1,3 @@
-// /lib/ytmusic.js
-
-// --- Deobfuscation helpers for tS/tH ---
-
 async function fetchAndDeobfuscate(videoId) {
   const headers = {
     "User-Agent":
@@ -101,8 +97,6 @@ async function fetchYTMusic(endpoint, body) {
   return response.json();
 }
 
-// --- SEARCH ---
-
 export async function searchTracksInternal(term, continuation = null) {
   const body = continuation
     ? { continuation }
@@ -116,7 +110,9 @@ export async function searchTracksInternal(term, continuation = null) {
       (c) => c?.musicShelfRenderer
     )?.musicShelfRenderer;
 
-  const results = (musicShelf?.contents || [])
+  if (!musicShelf?.contents) return { results: [], continuation: null };
+
+  const results = musicShelf.contents
     .map(({ musicResponsiveListItemRenderer: track }) => {
       if (!track?.playlistItemData?.videoId) return null;
       const title =
@@ -125,7 +121,7 @@ export async function searchTracksInternal(term, continuation = null) {
       const artistsRaw =
         track.flexColumns[1]?.musicResponsiveListItemFlexColumnRenderer?.text
           ?.runs || [];
-      const artists = artistsRaw.map((r) => r?.text).join("");
+      const artists = artistsRaw.map((r) => r.text).join("");
       const playsCount =
         track.flexColumns?.[2]?.musicResponsiveListItemFlexColumnRenderer?.text
           ?.runs?.[0]?.text || null;
@@ -172,34 +168,32 @@ export async function searchTracksInternal(term, continuation = null) {
   return { results, continuation: next };
 }
 
-// --- Relative Track Data ---
-
 async function getRelativeTrackData(videoId) {
   try {
     const ytMusicData = await fetchYTMusic("next", { videoId });
     if (!ytMusicData?.contents || !ytMusicData?.currentVideoEndpoint)
       throw new Error("No video details available");
 
-    const playlistId =
-      ytMusicData?.contents?.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs?.find(
-        (tab) => tab?.tabRenderer?.title === "Up next"
-      )?.tabRenderer?.content?.musicQueueRenderer?.content
-        ?.playlistPanelRenderer?.contents?.[1]?.automixPreviewVideoRenderer
-        ?.content?.automixPlaylistVideoRenderer?.navigationEndpoint
-        ?.watchPlaylistEndpoint?.playlistId;
+    const tabRenderer =
+      ytMusicData.contents.singleColumnMusicWatchNextResultsRenderer
+        ?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs;
 
-    const browseId =
-      ytMusicData?.contents?.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs?.find(
-        (tab) => tab?.tabRenderer?.title === "Lyrics"
-      )?.tabRenderer?.endpoint?.browseEndpoint?.browseId;
+    const playlistId = tabRenderer?.find(
+      (tab) => tab.tabRenderer?.title === "Up next"
+    )?.tabRenderer?.content?.musicQueueRenderer?.content?.playlistPanelRenderer
+      ?.contents?.[1]?.automixPreviewVideoRenderer?.content
+      ?.automixPlaylistVideoRenderer?.navigationEndpoint?.watchPlaylistEndpoint
+      ?.playlistId;
+
+    const browseId = tabRenderer?.find(
+      (tab) => tab.tabRenderer?.title === "Lyrics"
+    )?.tabRenderer?.endpoint?.browseEndpoint?.browseId;
 
     return { playlistId, browseId };
   } catch {
     return null;
   }
 }
-
-// --- GET TRACK INFO MAIN LOGIC ---
 
 export async function getTrackData(videoId, env, ssr) {
   let title,
@@ -209,79 +203,81 @@ export async function getTrackData(videoId, env, ssr) {
     images,
     playsCount;
 
-  // fetch initial YT page
-  const response = await fetch(`https://music.youtube.com/watch?v=${videoId}`, {
-    headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
-  });
-  const html = await response.text();
+  const initialResponse = await fetch(
+    `https://music.youtube.com/watch?v=${videoId}`,
+    {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+    }
+  );
+  const html = await initialResponse.text();
   const regex = html.match(/var ytInitialPlayerResponse = (.*?);\s*<\/script>/);
 
   let result = null;
-  if (regex) {
-    result = JSON.parse(regex[1]);
+  if (regex?.[1]) {
+    try {
+      result = JSON.parse(regex[1]);
+    } catch (e) {
+      console.error("Failed to parse ytInitialPlayerResponse", e);
+    }
   }
 
+  console.log(result);
+
   if (result?.videoDetails?.title) {
-    const { lengthSeconds, shortDescription, thumbnail, viewCount } =
-      result.videoDetails;
-
-    title = result.videoDetails.title;
-    keywords = result.videoDetails.keywords;
-    artists = shortDescription
-      .split("\n")
-      .filter((line) => line.trim() !== "")[1];
-    duration = ((s) =>
-      `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(
-        2,
-        "0"
-      )}`)(Number(lengthSeconds));
+    const {
+      lengthSeconds,
+      shortDescription,
+      thumbnail,
+      viewCount,
+      title: videoTitle,
+    } = result.videoDetails;
+    title = videoTitle;
+    keywords = result.videoDetails.keywords || [];
+    artists = shortDescription?.split("\n").filter(Boolean)[1] || "";
+    duration = new Date(Number(lengthSeconds) * 1000)
+      .toISOString()
+      .slice(14, 19);
     images = thumbnail.thumbnails;
-    playsCount = ((n) =>
-      n >= 1e9
-        ? (n / 1e9).toFixed(1) + "B"
-        : n >= 1e6
-        ? (n / 1e6).toFixed(1) + "M"
-        : n >= 1e3
-        ? (n / 1e3).toFixed(1) + "K"
-        : n)(Number(viewCount));
+    playsCount = new Intl.NumberFormat("en-US", {
+      notation: "compact",
+      compactDisplay: "short",
+    }).format(viewCount);
   } else {
-    // fallback: oembed+search
-    title =
-      (
-        await fetch(
-          `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
-        ).then((r) => (r.ok ? r.json() : null))
-      )?.title || "";
+    const [oembedResponse, searchResponse] = await Promise.all([
+      fetch(
+        `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
+      ).then((r) => (r.ok ? r.json() : null)),
+      searchTracksInternal(videoId),
+    ]);
 
-    const { results } = await searchTracksInternal(`${videoId} ${title}`);
+    title = oembedResponse?.title || "";
     const found =
-      results.find((item) => item.videoId === videoId) || results[0];
-    if (!found) throw new Error("Track not found");
+      searchResponse.results.find((item) => item.videoId === videoId) ||
+      searchResponse.results[0];
+    if (!found) throw new Error("Track not found via fallback");
 
     const parts = found.artists?.split(" • ") || [];
-    artists = parts.join(" • ");
-    duration = parts.pop();
+    artists =
+      parts.length > 1 ? parts.slice(0, -1).join(" • ") : parts[0] || "";
+    duration = parts[parts.length - 1] || "0:00";
     images = found.images;
     playsCount = found.playsCount;
   }
 
   const playedAt = new Date().toISOString();
-
   const baseSlug = title
     .toLowerCase()
     .replace(/[^a-z0-9 ]+/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+$/, "")
-    .slice(0, 10);
-
+    .slice(0, 50);
   const slug = `${baseSlug}_${videoId}`;
 
-  // Store sitemap if env is given
-  if (env && env.YTMUSIC_SITEMAP_KV) {
-    await env.YTMUSIC_SITEMAP_KV.put(
+  if (env?.YTMUSIC_SITEMAP_KV) {
+    env.YTMUSIC_SITEMAP_KV.put(
       `${videoId}`,
       JSON.stringify({ slug, playedAt })
-    );
+    ).catch(console.error);
   }
 
   if (ssr) {
@@ -297,9 +293,13 @@ export async function getTrackData(videoId, env, ssr) {
     };
   }
 
-  const { tS, tH } = await fetchAndDeobfuscate(videoId);
+  const [deobfuscatedData, relativeData] = await Promise.all([
+    fetchAndDeobfuscate(videoId),
+    getRelativeTrackData(videoId),
+  ]);
+
+  const { tS, tH } = deobfuscatedData;
   if (!tS || !tH) throw new Error("Failed to fetch deobfuscated result");
-  const relativeData = await getRelativeTrackData(videoId);
 
   return {
     videoId,
@@ -316,13 +316,11 @@ export async function getTrackData(videoId, env, ssr) {
   };
 }
 
-// --- Next Track ---
-
 export async function getNextTrackData(videoId, playlistId, playedTrackIds) {
   const ytMusicData = await fetchYTMusic("next", {
     videoId,
     playlistId,
-    playedTrackIds,
+    playedTrackIds: playedTrackIds || [],
   });
 
   const playlist =
@@ -331,24 +329,25 @@ export async function getNextTrackData(videoId, playlistId, playedTrackIds) {
       ?.content?.musicQueueRenderer?.content?.playlistPanelRenderer?.contents;
   if (!playlist) throw new Error("No playlist available");
 
-  const tracks = playlist
-    .filter((item) => item?.playlistPanelVideoRenderer)
-    .filter(
-      (item) =>
-        !playedTrackIds
-          ?.split(",")
-          .includes(item?.playlistPanelVideoRenderer?.videoId)
-    );
+  const playedIds = new Set(playedTrackIds || []);
+  const tracks = playlist.filter(
+    (item) =>
+      item?.playlistPanelVideoRenderer &&
+      !playedIds.has(item.playlistPanelVideoRenderer.videoId)
+  );
+
+  if (tracks.length === 0) return { videoId: null };
+
+  const nextTrack = tracks[Math.floor(Math.random() * tracks.length)];
   const nextTrackId =
-    tracks[Math.floor(Math.random() * tracks.length)]
-      ?.playlistPanelVideoRenderer?.navigationEndpoint?.watchEndpoint?.videoId;
+    nextTrack?.playlistPanelVideoRenderer?.navigationEndpoint?.watchEndpoint
+      ?.videoId;
 
   return { videoId: nextTrackId };
 }
 
-// --- Lyrics ---
-
 export async function getTrackLyricsData(browseId) {
+  if (!browseId) return "No lyrics available for this song.";
   const ytMusicData = await fetchYTMusic("browse", { browseId });
   const lyrics =
     ytMusicData?.contents?.sectionListRenderer?.contents?.[0]
@@ -356,9 +355,8 @@ export async function getTrackLyricsData(browseId) {
   return lyrics || "Couldn't load the lyrics for this song.";
 }
 
-// --- Suggestions ---
-
 export async function getSuggestionsData(term) {
+  if (!term) return { results: [] };
   const ytMusicData = await fetchYTMusic("music/get_search_suggestions", {
     input: term,
   });
@@ -366,14 +364,14 @@ export async function getSuggestionsData(term) {
     ytMusicData?.contents?.[0]?.searchSuggestionsSectionRenderer?.contents
       ?.map((content) => ({
         suggestionText:
-          content?.searchSuggestionRenderer?.suggestion?.runs?.[0]?.text,
+          content.searchSuggestionRenderer?.suggestion?.runs?.[0]?.text,
         suggestionQuery:
-          content?.searchSuggestionRenderer?.navigationEndpoint?.searchEndpoint
+          content.searchSuggestionRenderer?.navigationEndpoint?.searchEndpoint
             ?.query,
       }))
-      .filter(Boolean);
+      .filter((c) => c.suggestionText && c.suggestionQuery);
 
-  return { results: suggestions };
+  return { results: suggestions || [] };
 }
 
 const STATIC_SITEMAP_KEY = "static_sitemap";
@@ -381,92 +379,71 @@ const STATIC_SITEMAP_TIMESTAMP_KEY = "static_sitemap_timestamp";
 const SITEMAP_EXPIRY_DAYS = 2;
 const STATIC_THRESHOLD = 25;
 
-/**
- * Converts a slug and videoId into a <url> entry.
- */
 function generateUrlEntry(slug, date) {
-  return `
-    <url>
-      <loc>https://flexiyo.pages.dev/music/${slug}</loc>
-      <lastmod>${date}</lastmod>
-      <changefreq>weekly</changefreq>
-      <priority>0.8</priority>
-    </url>
-  `.trim();
+  return `<url><loc>https://flexiyo.pages.dev/music/${slug}</loc><lastmod>${date}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`;
 }
 
-/**
- * Converts KV (slug → videoId) into full sitemap XML.
- */
+function wrapInSitemap(entries) {
+  return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${entries.join(
+    ""
+  )}</urlset>`;
+}
+
 async function buildDynamicSitemap(kvStore) {
-  const keys = await kvStore.list();
-  const entries = [];
+  const { keys } = await kvStore.list();
+  const promises = keys.map((key) => kvStore.get(key.name));
+  const rawDataEntries = await Promise.all(promises);
 
-  for (const key of keys.keys) {
-    const rawData = await kvStore.get(key.name);
-    if (!rawData) continue;
-
-    let data;
-    try {
-      data = JSON.parse(rawData);
-    } catch (e) {
-      console.error("Invalid JSON in KV:", key.name);
-      continue;
-    }
-
-    if (data && data.slug) {
-      entries.push(generateUrlEntry(data.slug, data.playedAt));
-    }
-  }
+  const entries = rawDataEntries
+    .map((rawData) => {
+      if (!rawData) return null;
+      try {
+        const data = JSON.parse(rawData);
+        if (data?.slug) {
+          return generateUrlEntry(data.slug, data.playedAt);
+        }
+      } catch (e) {
+        console.error("Invalid JSON in KV:", e);
+      }
+      return null;
+    })
+    .filter(Boolean);
 
   return wrapInSitemap(entries);
 }
 
-/**
- * Wraps <urlset> around entries.
- */
-function wrapInSitemap(entries) {
-  return `<?xml version="1.0" encoding="UTF-8"?>
-  <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${entries.join(
-    "\n"
-  )}</urlset>`;
-}
-
-/**
- * Handles the /sitemap.xml request.
- */
 export async function handleSitemap(env) {
-  console.log(env)
   const kvStore = env.YTMUSIC_SITEMAP_KV;
-  const staticSitemap = await kvStore.get(STATIC_SITEMAP_KEY);
-  const staticTimestamp = await kvStore.get(STATIC_SITEMAP_TIMESTAMP_KEY);
+  const [staticSitemap, staticTimestamp] = await Promise.all([
+    kvStore.get(STATIC_SITEMAP_KEY),
+    kvStore.get(STATIC_SITEMAP_TIMESTAMP_KEY),
+  ]);
 
   if (staticSitemap && staticTimestamp) {
-    const createdAt = new Date(staticTimestamp);
-    const ageInMs = Date.now() - createdAt.getTime();
-    const twoDaysInMs = SITEMAP_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
-
-    if (ageInMs < twoDaysInMs) {
+    const ageInMs = Date.now() - new Date(staticTimestamp).getTime();
+    if (ageInMs < SITEMAP_EXPIRY_DAYS * 24 * 60 * 60 * 1000) {
       return new Response(staticSitemap, {
         headers: { "Content-Type": "application/xml" },
       });
     } else {
-      await kvStore.delete(STATIC_SITEMAP_KEY);
-      await kvStore.delete(STATIC_SITEMAP_TIMESTAMP_KEY);
+      Promise.all([
+        kvStore.delete(STATIC_SITEMAP_KEY),
+        kvStore.delete(STATIC_SITEMAP_TIMESTAMP_KEY),
+      ]).catch(console.error);
     }
   }
 
-  const keys = await kvStore.list();
-  const keyCount = keys.keys.length;
-
   const sitemap = await buildDynamicSitemap(kvStore);
+  const keyCount = (await kvStore.list()).keys.length;
 
   if (keyCount >= STATIC_THRESHOLD) {
-    await kvStore.put(STATIC_SITEMAP_KEY, sitemap);
-    await kvStore.put(STATIC_SITEMAP_TIMESTAMP_KEY, new Date().toISOString());
+    Promise.all([
+      kvStore.put(STATIC_SITEMAP_KEY, sitemap),
+      kvStore.put(STATIC_SITEMAP_TIMESTAMP_KEY, new Date().toISOString()),
+    ]).catch(console.error);
   }
 
-  return sitemap;
+  return new Response(sitemap, {
+    headers: { "Content-Type": "application/xml" },
+  });
 }
-
-// The End

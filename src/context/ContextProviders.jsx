@@ -1,4 +1,3 @@
-import React from "react";
 import { AppProvider } from "./items/AppContext";
 import { UserProvider } from "./items/UserContext";
 import { SocketProvider } from "./items/SocketContext";

@@ -7,23 +7,7 @@ export const AppProvider = ({ children }) => {
   const [contentQuality, setContentQuality] = useState(() => {
     return localStorage.getItem("contentQuality") || "normal";
   });
-  const [connectedToInternet, setConnectedToInternet] = useState(() => {
-    return navigator.onLine;
-  });
-
-  useEffect(() => {
-    const handleOnline = () => setConnectedToInternet(true);
-    const handleOffline = () => setConnectedToInternet(false);
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
-
+  
   useEffect(() => {
     const initializeApp = async () => {
       const startTime = Date.now();
@@ -94,7 +78,6 @@ export const AppProvider = ({ children }) => {
         setIsAppLoading,
         contentQuality,
         setContentQuality,
-        connectedToInternet,
       }}
     >
       {children}
