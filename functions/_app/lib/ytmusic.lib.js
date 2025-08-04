@@ -2,30 +2,37 @@ import fetch from 'node-fetch';
 
 async function fetchMp3secMp3has(videoId) {
   const headers = {
-    'User-Agent':
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Accept-Language': 'en-US,en;q=0.9',
-    Referer: '__',
+    "User-Agent':
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept-Language": "en-US,en;q=0.9",
+    Referer: "https://genyt.net/"
   };
 
-  const response = await fetch(`https://video.genyt.net/${videoId}`, { headers });
+  const response = await fetch(`https://video.genyt.net/${videoId}`, {
+    headers
+  });
   if (!response.ok) {
     throw new Error(`Failed to fetch page: ${response.statusText}`);
   }
 
   const html = await response.text();
 
-  const result = { mp3sec: null, mp3has: null, mp3cdn: null };
+  const result = {
+    mp3sec: null,
+    mp3has: null,
+  };
   const seen = new Set();
 
-  const regex = /var\s+(mp3sec|mp3has|mp3cdn)\s*=\s*['"]([^'"`<>\n]+)['"]/g;
+  const regex = /var\s+(mp3sec|mp3has)\s*=\s*['"]([^'"`<>\n]+)['"]/g;
   let match;
 
   while ((match = regex.exec(html))) {
-    const [, key, value] = match;
+    const [,
+      key,
+      value] = match;
     result[key] = value;
     seen.add(key);
-    if (seen.size === 3) break; // all found
+    if (seen.size === 2) break;
   }
 
   return result;
@@ -37,6 +44,8 @@ async function fetchYTMusic(endpoint, body) {
     {
       method: "POST",
       headers: {
+        "User-Agent':
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
@@ -180,7 +189,8 @@ export async function getTrackData(videoId, env, ssr) {
     `https://music.youtube.com/watch?v=${videoId}`,
     {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+        "User-Agent':
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
       },
     }
   );
@@ -280,10 +290,9 @@ export async function getTrackData(videoId, env, ssr) {
 
   const {
     mp3sec,
-    mp3has,
-    mp3cdn
+    mp3has
   } = fetchedMp3secMp3has;
-  if (!mp3sec || !mp3has || !mp3cdn) throw new Error("Failed to fetch mp3sec, mp3has or mp3cdn");
+  if (!mp3sec || !mp3has) throw new Error("Failed to fetch mp3sec or mp3has");
 
   return {
     videoId,
@@ -296,8 +305,7 @@ export async function getTrackData(videoId, env, ssr) {
     images,
     ...(relativeData || {}),
     mp3sec,
-    mp3has,
-    mp3cdn
+    mp3has
   };
 }
 

@@ -96,13 +96,12 @@ const useMusicUtils = ({
         duration,
         playlistId,
         browseId,
-        mp3cdn,
         mp3sec,
         mp3has,
       } = trackData;
 
       const linksResponse = await fetch(
-        `https://${mp3cdn}/getLinks.php?vid=${videoId}&s=${mp3sec}&h=${mp3has}`
+        `https://genyt.net/getLinks.php?vid=${videoId}&s=${mp3sec}&h=${mp3has}`
       );
       if (!linksResponse.ok)
         throw new Error(
