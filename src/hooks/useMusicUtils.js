@@ -84,8 +84,8 @@ const useMusicUtils = ({
       );
       const trackData = trackRes?.data?.data;
 
-      if (!trackData || !trackData.tS || !trackData.tH) {
-        throw new Error("Missing tS or tH in track response");
+      if (!trackData || !trackData.mp3sec || !trackData.mp3has) {
+        throw new Error("Missing mp3sec or mp3has in track response");
       }
 
       const {
@@ -96,12 +96,13 @@ const useMusicUtils = ({
         duration,
         playlistId,
         browseId,
-        tS,
-        tH,
+        mp3cdn,
+        mp3sec,
+        mp3has,
       } = trackData;
 
       const linksResponse = await fetch(
-        `https://www.genyt.net/getLinks.php?vid=${videoId}&s=${tS}&h=${tH}`
+        `https://${mp3cdn}/getLinks.php?vid=${videoId}&s=${mp3sec}&h=${mp3has}`
       );
       if (!linksResponse.ok)
         throw new Error(

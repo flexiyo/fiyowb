@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import {
+  renderDefaultPage,
   renderMusicPage,
   renderUserPage,
 } from '../lib/seo.lib.js';
@@ -19,7 +20,6 @@ function isBot(userAgent = "") {
   return botKeywords.some(keyword => ua.includes(keyword));
 }
 
-// SEO music page route (bot-only)
 seoRoutes.get('/music/:slug', async (c) => {
   const ua = c.req.header("User-Agent") || "";
   if (!isBot(ua)) return c.notFound();
@@ -35,6 +35,13 @@ seoRoutes.get('/u/:username', async (c) => {
 
   const username = c.req.param('username');
   return await renderUserPage(username, c.env);
+});
+
+seoRoutes.get('*', async (c) => {
+  const ua = c.req.header("User-Agent") || "";
+  if (!isBot(ua)) return c.notFound();
+
+  return await renderDefaultPage(c);
 });
 
 export default seoRoutes;

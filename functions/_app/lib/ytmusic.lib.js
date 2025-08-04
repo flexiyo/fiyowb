@@ -1,88 +1,34 @@
-async function fetchAndDeobfuscate(videoId) {
+import fetch from 'node-fetch';
+
+async function fetchMp3secMp3has(videoId) {
   const headers = {
-    "User-Agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Accept-Language": "en-US,en;q=0.9",
-    Referer: "__",
+    'User-Agent':
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept-Language': 'en-US,en;q=0.9',
+    Referer: '__',
   };
 
-  const response = await fetch(`https://mp3api.ytjar.info/?id=${videoId}`, {
-    headers,
-  });
-  if (!response.ok)
+  const response = await fetch(`https://video.genyt.net/${videoId}`, { headers });
+  if (!response.ok) {
     throw new Error(`Failed to fetch page: ${response.statusText}`);
-
-  const pageText = await response.text();
-  const scriptMatches = pageText.match(/<script[^>]*>([\s\S]*?)<\/script>/gi);
-  if (!scriptMatches) throw new Error("No script tags found.");
-
-  let encodedStr = null,
-  key = null,
-  num1 = null,
-  num2 = null,
-  num3 = null,
-  num4 = null;
-  for (const script of scriptMatches) {
-    const paramMatch = script.match(
-      /\(\s*"(.*?)"\s*,\s*(\d+)\s*,\s*"(.*?)"\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/
-    );
-    if (paramMatch) {
-      [,
-        encodedStr,
-        num1,
-        key,
-        num2,
-        num3,
-        num4] = paramMatch;
-      break;
-    }
-  }
-  if (!encodedStr || !key)
-    throw new Error("No encoded parameters found in any script tag.");
-
-  function decodeBase(d, e, f) {
-    const charset =
-    "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/";
-    const baseE = charset.slice(0, e);
-    const baseF = charset.slice(0, f);
-    let value = d
-    .split("")
-    .reverse()
-    .reduce((acc, char, index) => {
-      const pos = baseE.indexOf(char);
-      return pos !== -1 ? acc + pos * Math.pow(e, index): acc;
-    }, 0);
-    let result = "";
-    while (value > 0) {
-      result = baseF[value % f] + result;
-      value = Math.floor(value / f);
-    }
-    return result || "0";
   }
 
-  function deobfuscate(h, _, n, t, e) {
-    let result = "";
-    for (let i = 0; i < h.length; i++) {
-      let s = "";
-      while (h[i] !== n[e]) {
-        s += h[i];
-        i++;
-      }
-      for (let j = 0; j < n.length; j++)
-        s = s.replace(new RegExp(n[j], "g"), j);
-      result += String.fromCharCode(decodeBase(s, e, 10) - t);
-    }
-    return result;
+  const html = await response.text();
+
+  const result = { mp3sec: null, mp3has: null, mp3cdn: null };
+  const seen = new Set();
+
+  const regex = /var\s+(mp3sec|mp3has|mp3cdn)\s*=\s*['"]([^'"`<>\n]+)['"]/g;
+  let match;
+
+  while ((match = regex.exec(html))) {
+    const [, key, value] = match;
+    result[key] = value;
+    seen.add(key);
+    if (seen.size === 3) break; // all found
   }
 
-  const deobfuscatedText = deobfuscate(encodedStr, "", key, num2, num3);
-  const tSMatch = deobfuscatedText.match(/var\s+tS\s*=\s*"(\d+)"/);
-  const tHMatch = deobfuscatedText.match(/var\s+tH\s*=\s*"([a-f0-9]+)"/);
-
-  return {
-    tS: tSMatch?.[1] || null,
-    tH: tHMatch?.[1] || null
-  };
+  return result;
 }
 
 async function fetchYTMusic(endpoint, body) {
@@ -326,17 +272,18 @@ export async function getTrackData(videoId, env, ssr) {
     };
   }
 
-  const [deobfuscatedData,
+  const [fetchedMp3secMp3has,
     relativeData] = await Promise.all([
-      fetchAndDeobfuscate(videoId),
+      fetchMp3secMp3has(videoId),
       getRelativeTrackData(videoId),
     ]);
 
   const {
-    tS,
-    tH
-  } = deobfuscatedData;
-  if (!tS || !tH) throw new Error("Failed to fetch deobfuscated result");
+    mp3sec,
+    mp3has,
+    mp3cdn
+  } = fetchedMp3secMp3has;
+  if (!mp3sec || !mp3has || !mp3cdn) throw new Error("Failed to fetch mp3sec, mp3has or mp3cdn");
 
   return {
     videoId,
@@ -348,8 +295,9 @@ export async function getTrackData(videoId, env, ssr) {
     playsCount,
     images,
     ...(relativeData || {}),
-    tS,
-    tH,
+    mp3sec,
+    mp3has,
+    mp3cdn
   };
 }
 

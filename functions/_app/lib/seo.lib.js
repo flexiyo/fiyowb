@@ -1,6 +1,54 @@
 import { getTrackData } from "./ytmusic.lib.js";
-import { renderSeoPage } from "./renderSeoPage.js";
-import seoTemplate from "../seoTemplate.html";
+import seoTemplate from "../templates/seoTemplate.html";
+import defaultTemplate from '../templates/defaultTemplate.html';
+
+export function renderSeoPage(template, data = {}) {
+  return Object.entries(data).reduce((html, [key, value]) => {
+    return html.replaceAll(`{{${key}}}`, value || '')
+  }, template)
+}
+
+export function renderDefaultPage(req) {
+  const url = new URL(req.url);
+  const canonical = url.href;
+
+  const title = 'Flexiyo';
+  const meta_description = 'Join the Flexiyo community to share your skills, discover music, and explore creators.';
+  const og_description = `Flex in Your Onset — ${meta_description}`;
+  const image = 'https://flexiyo.pages.dev/logo192.png';
+
+  const jsonLD = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: title,
+    description: meta_description,
+    url: canonical,
+    publisher: {
+      "@type": "Organization",
+      name: "Flexiyo",
+      logo: {
+        "@type": "ImageObject",
+        url: image,
+      },
+    },
+  });
+
+  const html = renderSeoPage(defaultTemplate, {
+    title,
+    meta_description,
+    og_description,
+    canonical_url: canonical,
+    image,
+    structured_data: jsonLD,
+  });
+
+  return new Response(html, {
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'public, max-age=600, s-maxage=1800',
+    },
+  });
+}
 
 // MUSIC SSR PAGE
 export async function renderMusicPage(slug, env) {
