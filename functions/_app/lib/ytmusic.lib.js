@@ -1,42 +1,5 @@
 import fetch from 'node-fetch';
 
-async function fetchMp3secMp3has(videoId) {
-  const headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Referer": "https://genyt.net/"
-  };
-
-  const response = await fetch(`https://video.genyt.net/${videoId}`, {
-    headers
-  });
-  if (!response.ok) {
-    throw new Error(`Failed to fetch page: ${response.statusText}`);
-  }
-
-  const html = await response.text();
-
-  const result = {
-    mp3sec: null,
-    mp3has: null,
-  };
-  const seen = new Set();
-
-  const regex = /var\s+(mp3sec|mp3has)\s*=\s*['"]([^'"`<>\n]+)['"]/g;
-  let match;
-
-  while ((match = regex.exec(html))) {
-    const [,
-      key,
-      value] = match;
-    result[key] = value;
-    seen.add(key);
-    if (seen.size === 2) break;
-  }
-
-  return result;
-}
-
 async function fetchYTMusic(endpoint, body) {
   const response = await fetch(
     `https://music.youtube.com/youtubei/v1/${endpoint}?prettyPrint=false`,
@@ -279,18 +242,10 @@ export async function getTrackData(videoId, env, ssr) {
     };
   }
 
-  const [fetchedMp3secMp3has,
-    relativeData] = await Promise.all([
-      fetchMp3secMp3has(videoId),
-      getRelativeTrackData(videoId),
-    ]);
-
-  const {
-    mp3sec,
-    mp3has
-  } = fetchedMp3secMp3has;
-  if (!mp3sec || !mp3has) throw new Error("Failed to fetch mp3sec or mp3has");
-
+  const relativeData = await Promise(
+    getRelativeTrackData(videoId)
+  );
+  
   return {
     videoId,
     slug,
@@ -300,9 +255,7 @@ export async function getTrackData(videoId, env, ssr) {
     duration,
     playsCount,
     images,
-    ...(relativeData || {}),
-    mp3sec,
-    mp3has
+    ...(relativeData || {})
   };
 }
 
