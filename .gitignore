@@ -9,10 +9,8 @@ lerna-debug.log*
 
 .env
 node_modules
+package-lock.json
 dist
-.firebaserc
-firebase.json
-.firebase
 dist-ssr
 *.local
 
