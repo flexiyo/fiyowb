@@ -1,6 +1,7 @@
 {
   "name": "flexiyo",
   "compatibility_date": "2025-08-02",
+  "compatibility_flags": ["nodejs_compat_v2"],
   "pages_build_output_dir": "dist",
   "kv_namespaces": [
     {

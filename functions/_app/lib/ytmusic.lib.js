@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 
 async function fetchMp3secMp3has(videoId) {
   const headers = {
-    "User-Agent ": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Accept-Language": "en-US,en;q=0.9",
     "Referer": "https://genyt.net/"
   };
@@ -43,8 +43,7 @@ async function fetchYTMusic(endpoint, body) {
     {
       method: "POST",
       headers: {
-        "User-Agent':
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
@@ -188,8 +187,7 @@ export async function getTrackData(videoId, env, ssr) {
     `https://music.youtube.com/watch?v=${videoId}`,
     {
       headers: {
-        "User-Agent':
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
       },
     }
   );

@@ -27,7 +27,7 @@ app.use("/*", async (c, next) => {
 
   c.res.headers.set(
     "Access-Control-Allow-Origin",
-    allowedOrigins.includes(origin) ? origin : allowedOrigins[0]
+    allowedOrigins.includes(origin) ? origin : allowedOrigins[0],
   );
   await next();
 });
