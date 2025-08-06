@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { renderMusicPage, renderUserPage } from "../lib/seo.lib.js";
+import { renderDefaultPage, renderMusicPage, renderUserPage } from "../lib/seo.lib.js";
 
 const seoRoutes = new Hono();
 
@@ -53,6 +53,13 @@ seoRoutes.get("/u/:username", async (c) => {
 
   const username = c.req.param("username");
   return await renderUserPage(username);
+});
+
+seoRoutes.get("*", async (c) => {
+  const ua = c.req.header("User-Agent") || "";
+  if (!isBot(ua)) return c.notFound();
+  
+  return await renderDefaultPage(c.req.url);
 });
 
 export default seoRoutes;

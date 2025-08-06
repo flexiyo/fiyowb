@@ -1,4 +1,7 @@
-import { getTrackData } from "./ytmusic.lib.js";
+import {
+  getTrackData
+} from "./ytmusic.lib.js";
+import defaultTemplate from '../templates/defaultTemplate.html';
 import seoTemplate from "../templates/seoTemplate.html";
 
 export function renderSeoPage(template, data = {}) {
@@ -7,33 +10,59 @@ export function renderSeoPage(template, data = {}) {
   }, template)
 }
 
+
+export async function renderDefaultPage(url) {
+  const canonicalUrl = url.toString();
+
+  const html = defaultTemplate.replace('__CANONICAL_URL__', canonicalUrl);
+  return new Response(html, {
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "public, max-age=3600, s-maxage=86400",
+    },
+  });
+}
+
 // MUSIC SSR PAGE
 export async function renderMusicPage(slug, env) {
   const videoId = slug?.split("_").pop();
 
   if (!videoId) {
-    return new Response("Invalid URL: Video ID not found.", { status: 400 });
+    return new Response("Invalid URL: Video ID not found.", {
+      status: 400
+    });
   }
 
   try {
     const trackData = await getTrackData(videoId, env, true);
     if (!trackData || !trackData.videoId) {
-      return new Response("Track data not found.", { status: 404 });
+      return new Response("Track data not found.", {
+        status: 404
+      });
     }
 
-    const { title, artists, keywords, duration, playsCount, images } = trackData;
+    const {
+      title,
+      artists,
+      keywords,
+      duration,
+      playsCount,
+      images
+    } = trackData;
 
     const canonical = `https://flexiyo.pages.dev/music/${slug}`;
     const image = images?.[2]?.url || "";
     const description = `Listen to ${title} by ${artists
-      .split("•")[0]
-      .trim()}. Enjoy high-quality audio, view lyrics, and more on Flexiyo Music.`;
+    .split("•")[0]
+    .trim()}. Enjoy high-quality audio, view lyrics, and more on Flexiyo Music.`;
 
     const jsonLD = JSON.stringify({
       "@context": "https://schema.org",
       "@type": "MusicRecording",
       name: title,
-      byArtist: { "@type": "MusicGroup", name: artists },
+      byArtist: {
+        "@type": "MusicGroup", name: artists
+      },
       duration,
       image,
       url: canonical,
@@ -51,13 +80,12 @@ export async function renderMusicPage(slug, env) {
       twitter_handle: "x_flexiyo",
       structured_data: jsonLD,
       content_block: `
-        <p><strong>Duration:</strong> ${duration}</p>
-        <p><strong>Plays:</strong> ${playsCount}</p>
-        ${
-          image
-            ? `<figure><img src="${image}" alt="${title}" loading="lazy" /></figure>`
-            : ""
-        }
+      <p><strong>Duration:</strong> ${duration}</p>
+      <p><strong>Plays:</strong> ${playsCount}</p>
+      ${
+      image
+      ? `<figure><img src="${image}" alt="${title}" loading="lazy" /></figure>`: ""
+      }
       `,
     });
 
@@ -78,7 +106,9 @@ export async function renderMusicPage(slug, env) {
 // USER SSR PAGE
 export async function renderUserPage(username) {
   if (!username) {
-    return new Response("Username missing", { status: 400 });
+    return new Response("Username missing", {
+      status: 400
+    });
   }
 
   try {
@@ -92,7 +122,9 @@ export async function renderUserPage(username) {
     });
 
     if (res.status === 404) {
-      return new Response("User not found", { status: 404 });
+      return new Response("User not found", {
+        status: 404
+      });
     }
     if (!res.ok) {
       throw new Error(`GitHub API failed with status: ${res.status}`);
@@ -114,17 +146,16 @@ export async function renderUserPage(username) {
         user.html_url,
         user.blog,
         user.twitter_username
-          ? `https://twitter.com/${user.twitter_username}`
-          : null,
+        ? `https://twitter.com/${user.twitter_username}`: null,
       ].filter(Boolean),
     });
 
     const html = renderSeoPage(seoTemplate, {
       title: `${user.name || user.login} (@${user.login}) - Flexiyo`,
       description: `${user.followers} Followers | ${
-        user.public_repos
+      user.public_repos
       } Repositories. View the profile of ${
-        user.name || user.login
+      user.name || user.login
       } on Flexiyo.`,
       keywords: `${user.login}, github, developer, portfolio`,
       author: user.login,
@@ -134,14 +165,13 @@ export async function renderUserPage(username) {
       twitter_handle: user.twitter_username || "",
       structured_data: jsonLD,
       content_block: `
-        ${
-          image
-            ? `<img src="${image}" width="120" alt="${user.login}" loading="lazy" />`
-            : ""
-        }
-        <p><strong>Followers:</strong> ${user.followers.toLocaleString()}</p>
-        <p><strong>Following:</strong> ${user.following.toLocaleString()}</p>
-        <p><strong>Public Repos:</strong> ${user.public_repos.toLocaleString()}</p>
+      ${
+      image
+      ? `<img src="${image}" width="120" alt="${user.login}" loading="lazy" />`: ""
+      }
+      <p><strong>Followers:</strong> ${user.followers.toLocaleString()}</p>
+      <p><strong>Following:</strong> ${user.following.toLocaleString()}</p>
+      <p><strong>Public Repos:</strong> ${user.public_repos.toLocaleString()}</p>
       `,
     });
 
