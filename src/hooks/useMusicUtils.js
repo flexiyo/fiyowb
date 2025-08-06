@@ -60,7 +60,7 @@ const useMusicUtils = ({
       const { data } = await axios.get(
         `${YTMUSIC_BASE_URI}/search?term=${encodeURIComponent(term)}&${
           continuation ? `&continuation=${continuation}` : ""
-        }`
+        }`,
       );
 
       setContinuation(data.data?.continuation);
@@ -80,32 +80,48 @@ const useMusicUtils = ({
       }
 
       const trackRes = await axios.get(
-        `${YTMUSIC_BASE_URI}/track?videoId=${videoId}`
+        `${YTMUSIC_BASE_URI}/track?videoId=${videoId}`,
       );
       const trackData = trackRes?.data?.data;
 
-      if (!trackData || !trackData.mp3sec || !trackData.mp3has) {
-        throw new Error("Missing mp3sec or mp3has in track response");
+      const { slug, title, artists, images, duration, playlistId, browseId } =
+        trackData;
+
+      // 👉 Fetch the GenYT HTML page
+      const htmlRes = await fetch(`https://video.genyt.net/${videoId}`, {
+        method: "GET",
+        mode: "no-cors",
+        headers: {
+          "User-Agent": navigator.userAgent || "Mozilla/5.0",
+          Referer: "https://genyt.net/",
+        },
+      });
+
+      const html = await htmlRes.text();
+      const $page = load(html);
+      const scriptText = $page("script").text();
+
+      const mp3secMatch = scriptText.match(
+        /var\s+mp3sec\s*=\s*['"]([^'"]+)['"]/,
+      );
+      const mp3hasMatch = scriptText.match(
+        /var\s+mp3has\s*=\s*['"]([^'"]+)['"]/,
+      );
+
+      const mp3sec = mp3secMatch?.[1];
+      const mp3has = mp3hasMatch?.[1];
+
+      if (!mp3sec || !mp3has) {
+        throw new Error("Failed to extract mp3sec or mp3has");
       }
 
-      const {
-        slug,
-        title,
-        artists,
-        images,
-        duration,
-        playlistId,
-        browseId,
-        mp3sec,
-        mp3has,
-      } = trackData;
-
+      // 👉 Use the extracted values in getLinks.php call
       const linksResponse = await fetch(
-        `https://genyt.net/getLinks.php?vid=${videoId}&s=${mp3sec}&h=${mp3has}`
+        `https://genyt.net/getLinks.php?vid=${videoId}&s=${mp3sec}&h=${mp3has}`,
       );
       if (!linksResponse.ok)
         throw new Error(
-          `Failed to get download links: ${linksResponse.statusText}`
+          `Failed to get download links: ${linksResponse.statusText}`,
         );
 
       const $ = load(await linksResponse.text());
@@ -133,7 +149,6 @@ const useMusicUtils = ({
       };
 
       await cacheTrackData(track);
-
       return track;
     } catch (error) {
       console.error(`Error fetching track data: ${error}`);
@@ -161,7 +176,7 @@ const useMusicUtils = ({
   const getTrackLyrics = async (browseId) => {
     try {
       const trackRes = await axios.get(
-        `${YTMUSIC_BASE_URI}/lyrics?browseId=${browseId}`
+        `${YTMUSIC_BASE_URI}/lyrics?browseId=${browseId}`,
       );
       if (!trackRes?.data?.data) return "No Lyrics Available";
 
@@ -198,7 +213,7 @@ const useMusicUtils = ({
       const nextTrackRes = await axios.get(
         `${YTMUSIC_BASE_URI}/next?videoId=${currentTrack.videoId}&playlistId=${
           currentTrack.playlistId
-        }&previouslyPlayedTracks=${previouslyPlayedTracks.join(",") || ""}`
+        }&previouslyPlayedTracks=${previouslyPlayedTracks.join(",") || ""}`,
       );
       const nextTrackId = nextTrackRes?.data?.data?.videoId;
       if (!nextTrackId) return console.error("No next track found!");

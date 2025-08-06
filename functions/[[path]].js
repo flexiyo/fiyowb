@@ -32,10 +32,9 @@ app.use("/*", async (c, next) => {
   await next();
 });
 
-app.route("/", seoRoutes);
-
-// --- API Routes ---
 app.route("/api/ytmusic", ytMusicRoutes);
+
+app.route("/", seoRoutes);
 
 // --- Entry Point ---
 export const onRequest = async ({ request, env, context }) => {

@@ -33,11 +33,12 @@ const botKeywords = [
   "vkshare",
 ];
 
-function isBot(userAgent = "") {
+export function isBot(userAgent = "") {
   const ua = userAgent.toLowerCase();
   return botKeywords.some((keyword) => ua.includes(keyword));
 }
 
+// SEO route for music page
 seoRoutes.get("/music/:slug", async (c) => {
   const ua = c.req.header("User-Agent") || "";
   if (!isBot(ua)) return c.notFound();
@@ -46,7 +47,7 @@ seoRoutes.get("/music/:slug", async (c) => {
   return await renderMusicPage(slug, c.env);
 });
 
-// SEO user profile page route (bot-only)
+// SEO route for user profile
 seoRoutes.get("/u/:username", async (c) => {
   const ua = c.req.header("User-Agent") || "";
   if (!isBot(ua)) return c.notFound();
@@ -55,11 +56,13 @@ seoRoutes.get("/u/:username", async (c) => {
   return await renderUserPage(username);
 });
 
+// Fallback for all unmatched bot-accessed routes
 seoRoutes.get("*", async (c) => {
   const ua = c.req.header("User-Agent") || "";
   if (!isBot(ua)) return c.notFound();
-  
-  return await renderDefaultPage(c.req.url);
+
+  const canonicalUrl = new URL(c.req.url).href;
+  return await renderDefaultPage(canonicalUrl);
 });
 
 export default seoRoutes;
