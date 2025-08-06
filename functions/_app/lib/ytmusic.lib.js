@@ -146,25 +146,7 @@ export async function getTrackData(videoId, env, ssr) {
   images,
   playsCount;
 
-  const initialResponse = await fetch(
-    `https://music.youtube.com/watch?v=${videoId}`,
-    {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-      },
-    }
-  );
-  const html = await initialResponse.text();
-  const regex = html.match(/var ytInitialPlayerResponse = (.*?);\s*<\/script>/);
-
-  let result = null;
-  if (regex?.[1]) {
-    try {
-      result = JSON.parse(regex[1]);
-    } catch (e) {
-      console.error("Failed to parse ytInitialPlayerResponse", e);
-    }
-  }
+  const result = await fetchYTMusic("player", { videoId })
 
   if (result?.videoDetails?.title) {
     const {
