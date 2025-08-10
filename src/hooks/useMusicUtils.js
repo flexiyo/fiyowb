@@ -267,32 +267,33 @@ const useMusicUtils = ({
 
   /** Handle Next Audio Track */
   const handleNextAudioTrack = async () => {
-    try {
-      /* const { data } = await axios.get(
-        `${YTMUSIC_BASE_URI}/next?videoId=${currentTrack.videoId}&playlistId=${
-        currentTrack.playlistId
-        }&previouslyPlayedTracks=${previouslyPlayedTracks.join(",") || ""}`,
-      );
-      const nextTrackId = data?.data?.videoId; */
+  try {
+    /* const { data } = await axios.get(
+      `${YTMUSIC_BASE_URI}/next?videoId=${currentTrack.videoId}&playlistId=${
+      currentTrack.playlistId
+      }&previouslyPlayedTracks=${previouslyPlayedTracks.join(",") || ""}`,
+    );
+    const nextTrackId = data?.data?.videoId; */
 
-      const {
-        data
-      } = await axios.get(
-        `${FIYOSAAVN_BASE_URI}/songs/${currentTrack.videoId}/suggestions&limit=10`
-      );
+    const { data } = await axios.get(
+      `${FIYOSAAVN_BASE_URI}/songs/${currentTrack.videoId}/suggestions`
+    );
 
-      const filtered = data?.data?.filter(track => !previouslyPlayedTracks.includes(track.id));
+    const filtered = data?.data
+      ?.slice(0, 10)
+      ?.filter(track => !previouslyPlayedTracks.includes(track.id));
 
-      const nextTrackId = filtered.length > 0
-      ? filtered[Math.floor(Math.random() * filtered.length)].id: null;
+    const nextTrackId = filtered.length > 0
+      ? filtered[Math.floor(Math.random() * filtered.length)].id
+      : null;
 
-      if (!nextTrackId) return console.error("No next track found!");
+    if (!nextTrackId) return console.error("No next track found!");
 
-      await getTrack(nextTrackId);
-    } catch (error) {
-      console.error(`Error in handleNextTrack: ${error}`);
-    }
-  };
+    await getTrack(nextTrackId);
+  } catch (error) {
+    console.error(`Error in handleNextTrack: ${error}`);
+  }
+};
 
   return {
     searchTracks,
