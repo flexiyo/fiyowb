@@ -119,7 +119,7 @@ export const MusicProvider = ({ children }) => {
           currentTrack.urls?.audio?.[getQualityIndex(contentQuality)]
         ) {
           audio.src =
-            currentTrack.urls?.audio?.[getQualityIndex(contentQuality)];
+            currentTrack.urls?.audio?.[getQualityIndex(contentQuality)]?.url;
           audio.load();
         }
 

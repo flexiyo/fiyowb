@@ -77,7 +77,7 @@ const useMusicUtils = ({
       const {
         data
       } = await axios.get(
-        `${FIYOSAAVN_BASE_URI}/search/songs?query=${encodeURIComponent(term)}&limit=20&${
+        `${FIYOSAAVN_BASE_URI}/search/songs?query=${encodeURIComponent(term)}&limit=40&${
         continuation ? `&page=${continuation}`: ""
         }`,
       );

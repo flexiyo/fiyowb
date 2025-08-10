@@ -41,7 +41,7 @@ const TrackItem = memo(({ track, loading }) => {
       High: 2,
     }[quality];
 
-    const selectedUrl = fetched?.urls?.audio?.[qualityIndex];
+    const selectedUrl = fetched?.urls?.audio?.[qualityIndex]?.url;
 
     if (!selectedUrl) {
       alert("Download URL not available for the selected quality.");
@@ -169,9 +169,9 @@ const TrackItem = memo(({ track, loading }) => {
                   aria-label="Choose audio quality"
                   disabled={downloadLoading}
                 >
-                  <option value="Low">Low (48kbps)</option>
-                  <option value="Normal">Normal (96kbps)</option>
-                  <option value="High">High (160kbps)</option>
+                  <option value="Low">Low</option>
+                  <option value="Normal">Normal</option>
+                  <option value="High">High</option>
                 </select>
                 <p className="mt-3 text-gray-400 dark:text-gray-500 text-xs">
                   A new tab might open to start the download.
