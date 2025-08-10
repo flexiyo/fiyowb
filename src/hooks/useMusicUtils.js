@@ -1,7 +1,14 @@
 import axios from "axios";
-import { load } from "cheerio";
-import { openDB } from "idb";
-import { YTMUSIC_BASE_URI } from "../constants.js";
+import {
+  load
+} from "cheerio";
+import {
+  openDB
+} from "idb";
+import {
+  YTMUSIC_BASE_URI,
+  FIYOSAAVN_BASE_URI
+} from "../constants.js";
 
 const useMusicUtils = ({
   audioRef,
@@ -18,7 +25,9 @@ const useMusicUtils = ({
     return openDB("TrackCacheDB", 1, {
       upgrade(db) {
         if (!db.objectStoreNames.contains("tracks")) {
-          db.createObjectStore("tracks", { keyPath: "videoId" });
+          db.createObjectStore("tracks", {
+            keyPath: "videoId"
+          });
         }
       },
     });
@@ -27,7 +36,8 @@ const useMusicUtils = ({
   /** Cache Track Data */
   const cacheTrackData = async (track) => {
     const db = await openTrackDB();
-    const tx = db.transaction("tracks", "readwrite");
+    const tx = db.transaction("tracks",
+      "readwrite");
     const store = tx.objectStore("tracks");
     await store.put(track);
     await tx.done;
@@ -37,7 +47,8 @@ const useMusicUtils = ({
   const getCachedTrackData = async (videoId) => {
     const db = await openTrackDB();
 
-    const readTx = db.transaction("tracks", "readonly");
+    const readTx = db.transaction("tracks",
+      "readonly");
     const readStore = readTx.objectStore("tracks");
     const track = await readStore.get(videoId);
     await readTx.done;
@@ -57,13 +68,22 @@ const useMusicUtils = ({
   const searchTracks = async (term, continuation = null) => {
     setContinuation("");
     try {
-      const { data } = await axios.get(
+      /* const { data } = await axios.get(
         `${YTMUSIC_BASE_URI}/search?term=${encodeURIComponent(term)}&${
           continuation ? `&continuation=${continuation}` : ""
         }`,
+      ); */
+
+      const {
+        data
+      } = await axios.get(
+        `${FIYOSAAVN_BASE_URI}/search/songs?query=${encodeURIComponent(term)}&limit=20&${
+        continuation ? `&page=${continuation}`: ""
+        }`,
       );
 
-      setContinuation(data.data?.continuation);
+      //setContinuation(data.data?.continuation);
+      setContinuation(continuation + 1)
       return data.data?.results;
     } catch (error) {
       console.error(`Error searching: ${error}`);
@@ -79,16 +99,38 @@ const useMusicUtils = ({
         return cachedTrack;
       }
 
-      const trackRes = await axios.get(
+      /* const trackRes = await axios.get(
         `${YTMUSIC_BASE_URI}/track?videoId=${videoId}`,
+      ); */
+
+      const {
+        data
+      } = await axios.get(
+        `${FIYOSAAVN_BASE_URI}/songs/${videoId}`,
       );
-      const trackData = trackRes?.data?.data;
 
-      const { slug, title, artists, images, duration, playlistId, browseId } =
-        trackData;
+      // const trackData = data?.data;
+      const trackData = data?.data?.[0];
 
-      // 👉 Fetch the GenYT HTML page
-      const htmlRes = await fetch(`https://video.genyt.net/${videoId}`, {
+      // const { slug, title, artists, images, duration, playlistId, browseId } = trackData;
+
+      const {
+        url,
+        name: title,
+        artists: artistsList,
+        image: images,
+        duration: durationSeconds,
+        downloadUrl
+      } = trackData;
+
+      const parts = url.split("/")
+      const slug = `${parts[parts.length - 2]}_${parts[parts.length - 1]}`;
+
+      const artists = artistsList?.all?.map(a => a.name).join(", ") || "";
+
+      const duration = `${Math.floor(durationSeconds / 60)}:${(durationSeconds % 60).toString().padStart(2, "0")}`;
+
+      /* const htmlRes = await fetch(`https://video.genyt.net/${videoId}`, {
         method: "GET",
         mode: "no-cors",
         headers: {
@@ -121,18 +163,24 @@ const useMusicUtils = ({
       );
       if (!linksResponse.ok)
         throw new Error(
-          `Failed to get download links: ${linksResponse.statusText}`,
-        );
+        `Failed to get download links: ${linksResponse.statusText}`,
+      );
 
       const $ = load(await linksResponse.text());
       const extractLinks = (filter) =>
-        $("a.btn")
-          .map((_, el) => $(el).attr("href"))
-          .get()
-          .filter(filter);
+      $("a.btn")
+      .map((_, el) => $(el).attr("href"))
+      .get()
+      .filter(filter);
 
       const urls = {
         audio: extractLinks((url) => url.includes("mime=audio%2Fwebm")),
+      }; */
+
+      const urls = {
+        audio: downloadUrl?.map(d => ({
+          quality: d.quality, url: d.url
+        })) || []
       };
 
       const track = {
@@ -140,11 +188,11 @@ const useMusicUtils = ({
         slug,
         title,
         artists,
-        image: images?.[3]?.url,
+        image: images?.[3]?.url || images?.[2]?.url,
         duration,
         urls,
-        playlistId,
-        browseId,
+        // playlistId,
+        // browseId,
         createdAt: new Date(),
       };
 
@@ -175,12 +223,20 @@ const useMusicUtils = ({
   /** Get Track Lyrics */
   const getTrackLyrics = async (browseId) => {
     try {
-      const trackRes = await axios.get(
+      /* const { data } = await axios.get(
         `${YTMUSIC_BASE_URI}/lyrics?browseId=${browseId}`,
       );
-      if (!trackRes?.data?.data) return "No Lyrics Available";
+      const  { data } = await axios.get(
+        `${YTMUSIC_BASE_URI}/lyrics/${browseId}`,
+      );
+      if (!data?.data) return "No Lyrics Available";
 
-      setCurrentTrack({ ...currentTrack, lyrics: trackRes?.data?.data });
+      setCurrentTrack({
+        ...currentTrack, lyrics: data?.data
+      }); */
+      setCurrentTrack({
+        ...currentTrack, lyrics: "Couldn't load the lyrics for this song."
+      });
     } catch (error) {
       console.error(`Error fetching lyrics: ${error.message}`);
       return null;
@@ -210,12 +266,24 @@ const useMusicUtils = ({
   /** Handle Next Audio Track */
   const handleNextAudioTrack = async () => {
     try {
-      const nextTrackRes = await axios.get(
+      /* const { data } = await axios.get(
         `${YTMUSIC_BASE_URI}/next?videoId=${currentTrack.videoId}&playlistId=${
-          currentTrack.playlistId
+        currentTrack.playlistId
         }&previouslyPlayedTracks=${previouslyPlayedTracks.join(",") || ""}`,
       );
-      const nextTrackId = nextTrackRes?.data?.data?.videoId;
+      const nextTrackId = data?.data?.videoId; */
+      
+      const {
+        data
+      } = await axios.get(
+        `${FIYOSAAVN_BASE_URI}/songs/${videoId}/suggestions&limit=10`
+      );
+
+      const filtered = data?.data?.filter(track => !previouslyPlayedTracks.includes(track.id));
+
+      const nextTrackId = filtered.length > 0
+      ? filtered[Math.floor(Math.random() * filtered.length)].id: null;
+
       if (!nextTrackId) return console.error("No next track found!");
 
       await getTrack(nextTrackId);

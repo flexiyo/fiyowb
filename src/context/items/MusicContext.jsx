@@ -7,7 +7,7 @@ const MusicContext = createContext(null);
 
 export const MusicProvider = ({ children }) => {
   const [currentTrack, setCurrentTrack] = useState({});
-  const [continuation, setContinuation] = useState(null);
+  const [continuation, setContinuation] = useState(0);
   const [loopAudio, setLoopAudio] = useState(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
@@ -106,11 +106,11 @@ export const MusicProvider = ({ children }) => {
             case "low":
               return 2;
             case "normal":
-              return 1;
+              return 3;
             case "high":
-              return 0;
+              return 4;
             default:
-              return 0;
+              return 3;
           }
         };
 
