@@ -19,6 +19,7 @@ export const MusicProvider = ({ children }) => {
     duration: 0,
   });
   const [isPlayerReady, setIsPlayerReady] = useState(false);
+  const [isTrackDeckOpen, setIsTrackDeckOpen] = useState(false);
   const { contentQuality } = useContext(AppContext);
   const audioRef = useRef(new Audio());
 
@@ -163,6 +164,8 @@ export const MusicProvider = ({ children }) => {
         setPreviouslyPlayedTracks,
         audioProgress,
         setAudioProgress,
+        isTrackDeckOpen,
+        setIsTrackDeckOpen,
         handleNextAudioTrack,
         seekTo,
         ...MusicUtils,

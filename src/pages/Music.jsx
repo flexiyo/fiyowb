@@ -20,6 +20,8 @@ const Music = () => {
     continuation,
     isAudioPlaying,
     audioProgress,
+    isTrackDeckOpen,
+    setIsTrackDeckOpen,
     seekTo,
   } = useContext(MusicContext);
 
@@ -63,6 +65,9 @@ const Music = () => {
         const videoId = trackSlug.split("_")[1];
         if (videoId) {
           await getTrack(videoId);
+          if (!isTrackDeckOpen) {
+            setIsTrackDeckOpen(true)
+          }
         }
       } catch (error) {
         console.error("Error fetching track data:", error);

@@ -7,8 +7,8 @@ import TrackDeck from "./player/TrackDeck";
 import TrackPlayer from "./player/TrackPlayer";
 
 const PlayerStack = () => {
-  const { currentTrack } = useContext(MusicContext);
-  const [isTrackDeckOpen, setIsTrackDeckOpen] = useState(false);
+  const { currentTrack, isTrackDeckOpen, setIsTrackDeckOpen } = useContext(MusicContext);
+  
   const [isTablet, setIsTablet] = useState(window.innerWidth <= 1023);
 
   useEffect(() => {
