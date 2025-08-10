@@ -36,9 +36,9 @@ const TrackItem = memo(({ track, loading }) => {
 
     const fetched = await getTrackData(trackId);
     const qualityIndex = {
-      Low: 0,
-      Normal: 1,
-      High: 2,
+      Low: 2,
+      Normal: 3,
+      High: 4,
     }[quality];
 
     const selectedUrl = fetched?.urls?.audio?.[qualityIndex]?.url;
