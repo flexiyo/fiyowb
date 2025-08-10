@@ -12,34 +12,46 @@ const TrackItem = memo(({ track, loading }) => {
   const [quality, setQuality] = useState("Normal");
   const [downloadLoading, setDownloadLoading] = useState(false);
 
+  const trackTitle = track?.title || track?.name;
+  const trackArtists =
+    track?.artists?.primary?.map((artist) => artist.name).join(", ")
+    track?.artists ||
+    "Unknown Artist";
+  const trackImage = track?.images?.[1]?.url || track?.image?.[1]?.url;
+  const trackId = track?.id || track?.videoId;
+
   const handleClick = useCallback(async () => {
-    if (loading) return;
+    if (loading || !trackId) return;
     setTrackLoading(true);
-    await getTrack(track?.videoId);
+    await getTrack(trackId);
     setTrackLoading(false);
-  }, [getTrack, track?.videoId, loading]);
+  }, [getTrack, trackId, loading]);
 
   const handleDownload = async () => {
+    if (!trackId) {
+      alert("Track ID not available.");
+      return;
+    }
     setDownloadLoading(true);
 
+    const fetched = await getTrackData(trackId);
     const qualityIndex = {
       Low: 0,
       Normal: 1,
       High: 2,
     }[quality];
-    const fetched = await getTrackData(track?.videoId);
+
     const selectedUrl = fetched?.urls?.audio?.[qualityIndex];
 
     if (!selectedUrl) {
-      alert("Download URL not available.");
+      alert("Download URL not available for the selected quality.");
       setDownloadLoading(false);
       return;
     }
 
     const link = document.createElement("a");
-
     link.href = selectedUrl;
-    link.download = `${track?.title || "track"}_${quality}.mp3`;
+    link.download = `${trackTitle || "track"}_${quality}.mp3`;
     link.target = "_blank";
     document.body.appendChild(link);
     link.click();
@@ -58,7 +70,7 @@ const TrackItem = memo(({ track, loading }) => {
         exit={{ opacity: 0, y: 10 }}
         transition={{ duration: 0.3 }}
         disabled={loading}
-        aria-label={`Play track ${track?.title || "unknown"}`}
+        aria-label={`Play track ${trackTitle || "unknown"}`}
         className="flex flex-row items-center w-full gap-4 h-18 mb-4 rounded-md active:scale-98 transition-transform cursor-pointer select-none"
       >
         {loading ? (
@@ -73,8 +85,8 @@ const TrackItem = memo(({ track, loading }) => {
         ) : (
           <div className="flex justify-between items-center w-full gap-4">
             <motion.img
-              src={track?.images[1]?.url || track?.image[1]?.url}
-              alt={track?.title}
+              src={trackImage}
+              alt={trackTitle}
               className={`w-16 h-16 rounded-lg object-cover dark:bg-gray-700 bg-gray-200 ${
                 trackLoading ? "animate-pulse" : ""
               }`}
@@ -86,14 +98,13 @@ const TrackItem = memo(({ track, loading }) => {
             />
             <div className="flex flex-col w-2/3 overflow-hidden text-left">
               <p className="text-md dark:text-gray-100 text-gray-900 truncate">
-                {track?.title}
+                {trackTitle}
               </p>
               <p className="text-xs text-gray-400 font-medium truncate dark:text-gray-400">
-                {track?.artists || track?.primaryArtists}
+                {trackArtists}
               </p>
             </div>
 
-            {/* Push download button to right */}
             <button
               type="button"
               onClick={(e) => {
@@ -101,7 +112,7 @@ const TrackItem = memo(({ track, loading }) => {
                 setShowModal(true);
               }}
               className="ml-auto text-gray-600 dark:text-gray-300 hover:bg-gray-800 p-2 py rounded-full transition-colors focus:outline-none focus:ring focus:ring-blue-500"
-              aria-label={`Download ${track?.title} track`}
+              aria-label={`Download ${trackTitle} track`}
             >
               <ArrowDownCircle className="w-7 h-7" />
             </button>
@@ -109,7 +120,6 @@ const TrackItem = memo(({ track, loading }) => {
         )}
       </motion.div>
 
-      {/* Modal */}
       <AnimatePresence>
         {showModal && (
           <motion.div
@@ -127,25 +137,23 @@ const TrackItem = memo(({ track, loading }) => {
               exit={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 350, damping: 20 }}
             >
-              {/* Track Info */}
               <div className="flex items-center gap-4 mb-6">
                 <img
-                  src={track?.images[1]?.url || track?.image[1]?.url}
-                  alt={track?.title || "Track"}
+                  src={trackImage}
+                  alt={trackTitle || "Track"}
                   className="w-16 h-16 rounded-xl object-cover"
                   draggable={false}
                 />
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate overflow-hidden w-[50vw] max-w-xs">
-                    {track?.title}
+                    {trackTitle}
                   </h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400 truncate w-[50vw] max-w-xs">
-                    {track?.artists || track?.primaryArtists}
+                    {trackArtists}
                   </p>
                 </div>
               </div>
 
-              {/* Quality Selector */}
               <div className="mb-6">
                 <label
                   htmlFor="quality"
@@ -161,16 +169,15 @@ const TrackItem = memo(({ track, loading }) => {
                   aria-label="Choose audio quality"
                   disabled={downloadLoading}
                 >
-                  <option value="Low">Low</option>
-                  <option value="Normal">Normal</option>
-                  <option value="High">High</option>
+                  <option value="Low">Low (48kbps)</option>
+                  <option value="Normal">Normal (96kbps)</option>
+                  <option value="High">High (160kbps)</option>
                 </select>
                 <p className="mt-3 text-gray-400 dark:text-gray-500 text-xs">
-                  Download by clicking the three dot after redirection!
+                  A new tab might open to start the download.
                 </p>
               </div>
 
-              {/* Buttons */}
               <div className="flex justify-end space-x-3">
                 <button
                   type="button"
@@ -224,7 +231,6 @@ const SkeletonTrackItem = () => (
 
 // ----------------- TrackList -----------------
 const TrackList = memo(({ tracks = [], loading, ref, onScrollEnd }) => {
-  // Debounce scroll event to minimize multiple calls
   const handleScroll = useCallback(
     (e) => {
       if (loading || !onScrollEnd || !e.target) return;
@@ -234,7 +240,7 @@ const TrackList = memo(({ tracks = [], loading, ref, onScrollEnd }) => {
         onScrollEnd();
       }
     },
-    [loading, onScrollEnd],
+    [loading, onScrollEnd]
   );
 
   return (
@@ -248,7 +254,7 @@ const TrackList = memo(({ tracks = [], loading, ref, onScrollEnd }) => {
       {tracks.length > 0 ? (
         <>
           {tracks.map((track, index) => (
-            <TrackItem key={index} track={track} loading={loading} />
+            <TrackItem key={track.id || index} track={track} loading={loading} />
           ))}
 
           {loading &&
@@ -257,9 +263,11 @@ const TrackList = memo(({ tracks = [], loading, ref, onScrollEnd }) => {
             ))}
         </>
       ) : (
-        <p className="text-center text-gray-500 dark:text-gray-400 mt-10">
-          No tracks available.
-        </p>
+        !loading && (
+          <p className="text-center text-gray-500 dark:text-gray-400 mt-10">
+            No tracks available.
+          </p>
+        )
       )}
     </div>
   );
