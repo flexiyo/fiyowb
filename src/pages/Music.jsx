@@ -76,7 +76,7 @@ const Music = () => {
   useEffect(() => {
     if (!searchQuery) {
       setIsLoading(true);
-      searchTracks("Top+Hindi+And+English+Tracks").then((tracks) => {
+      searchTracks("Top+Songs").then((tracks) => {
         setTracks(tracks?.sort(() => 0.5 - Math.random()));
         setIsLoading(false);
       });
