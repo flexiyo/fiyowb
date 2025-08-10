@@ -116,6 +116,7 @@ const useMusicUtils = ({
       // const { slug, title, artists, images, duration, playlistId, browseId } = trackData;
 
       const {
+        id,
         url,
         name: title,
         artists: artistsList,
@@ -124,8 +125,8 @@ const useMusicUtils = ({
         downloadUrl
       } = trackData;
 
-      const parts = url.split("/")
-      const slug = `${parts[parts.length - 2]}_${parts[parts.length - 1]}`;
+      const parts = url.split("/");
+      const slug = `${parts[parts.length - 2]}_${id}`;
 
       const artists = artistsList?.all?.map(a => a.name).join(", ") || "";
 
@@ -273,11 +274,11 @@ const useMusicUtils = ({
         }&previouslyPlayedTracks=${previouslyPlayedTracks.join(",") || ""}`,
       );
       const nextTrackId = data?.data?.videoId; */
-      
+
       const {
         data
       } = await axios.get(
-        `${FIYOSAAVN_BASE_URI}/songs/${videoId}/suggestions&limit=10`
+        `${FIYOSAAVN_BASE_URI}/songs/${currentTrack.videoId}/suggestions&limit=10`
       );
 
       const filtered = data?.data?.filter(track => !previouslyPlayedTracks.includes(track.id));
