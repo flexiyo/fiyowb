@@ -23,9 +23,9 @@ const TrackItem = memo(({ track, loading }) => {
     setDownloadLoading(true);
 
     const qualityIndex = {
-      Low: 2,
-      Normal: 3,
-      High: 4,
+      Low: 0,
+      Normal: 1,
+      High: 2,
     }[quality];
     const fetched = await getTrackData(track?.videoId);
     const selectedUrl = fetched?.urls?.audio?.[qualityIndex];
@@ -73,8 +73,8 @@ const TrackItem = memo(({ track, loading }) => {
         ) : (
           <div className="flex justify-between items-center w-full gap-4">
             <motion.img
-              src={track?.images[1]?.url}
-              alt={track?.title || "Track image"}
+              src={track?.images[1]?.url || track?.image[1]?.url}
+              alt={track?.title}
               className={`w-16 h-16 rounded-lg object-cover dark:bg-gray-700 bg-gray-200 ${
                 trackLoading ? "animate-pulse" : ""
               }`}
@@ -87,11 +87,9 @@ const TrackItem = memo(({ track, loading }) => {
             <div className="flex flex-col w-2/3 overflow-hidden text-left">
               <p className="text-md dark:text-gray-100 text-gray-900 truncate">
                 {track?.title}
-                {track?.name}
               </p>
               <p className="text-xs text-gray-400 font-medium truncate dark:text-gray-400">
-                {/* track?.artists */}
-                {track?.artists?.all?.map((a) => a.name).join(", ") || ""}
+                {track?.artists || track?.primaryArtists}
               </p>
             </div>
 
@@ -103,7 +101,7 @@ const TrackItem = memo(({ track, loading }) => {
                 setShowModal(true);
               }}
               className="ml-auto text-gray-600 dark:text-gray-300 hover:bg-gray-800 p-2 py rounded-full transition-colors focus:outline-none focus:ring focus:ring-blue-500"
-              aria-label={`Download ${track?.title || track?.name} track`}
+              aria-label={`Download ${track?.title} track`}
             >
               <ArrowDownCircle className="w-7 h-7" />
             </button>
@@ -139,11 +137,10 @@ const TrackItem = memo(({ track, loading }) => {
                 />
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate overflow-hidden w-[50vw] max-w-xs">
-                    {track?.title || track?.name}
+                    {track?.title}
                   </h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400 truncate w-[50vw] max-w-xs">
-                    {/* track?.artists */}
-                    {track?.artists?.all?.map((a) => a.name).join(", ") || ""}
+                    {track?.artists || track?.primaryArtists}
                   </p>
                 </div>
               </div>
@@ -212,7 +209,7 @@ const SkeletonTrackItem = () => (
     animate={{ opacity: 1, y: 0 }}
     exit={{ opacity: 0, y: 10 }}
     transition={{ duration: 0.3 }}
-    className="flex flex-row items-center w-full gap-4 cursor-pointerl h-18 mb-4 rounded-md active:scale-98 transition-transform cursor-pointer select-none"
+    className="flex flex-row items-center w-full gap-4 cursor-pointer h-18 mb-4 rounded-md active:scale-98 transition-transform cursor-pointer select-none"
   >
     <div className="w-16 h-16 rounded-lg bg-gray-300 dark:bg-gray-700 animate-pulse" />
     <div className="flex flex-col w-2/3">
@@ -255,7 +252,7 @@ const TrackList = memo(({ tracks = [], loading, ref, onScrollEnd }) => {
           ))}
 
           {loading &&
-            Array.from({ length: 7 }).map((_, idx) => (
+            Array.from({ length: 20 }).map((_, idx) => (
               <SkeletonTrackItem key={`init-skeleton-${idx}`} />
             ))}
         </>

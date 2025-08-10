@@ -84,7 +84,8 @@ const useMusicUtils = ({
 
       //setContinuation(data.data?.continuation);
       setContinuation(continuation + 1)
-      return data.data?.results;
+      // return data.data?.results;
+      return data.data?.songs?.results;
     } catch (error) {
       console.error(`Error searching: ${error}`);
       return [];
