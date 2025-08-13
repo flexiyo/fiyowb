@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useContext } from "react";
 import MusicContext from "../../../context/items/MusicContext";
 import AudioProgressBar from "./AudioProgressBar";
@@ -19,8 +19,6 @@ const TrackDeck = () => {
   } = useContext(MusicContext);
 
   const handlePlayPause = isAudioPlaying ? handleAudioPause : handleAudioPlay;
-
-  const lyricsRef = useRef(null);
 
   const loadLyrics = async () => {
     if (!currentTrack?.browseId) return;
@@ -99,9 +97,8 @@ const TrackDeck = () => {
           </svg>
         </button>
       </div>
-      <div
+      {/* }<div
         className="flex flex-col justify-center rounded-xl p-4 w-full bg-secondary-bg dark:bg-secondary-bg-dark gap-4"
-        ref={lyricsRef}
       >
         <h2 className="text-2xl">Lyrics</h2>
         {currentTrack?.lyrics ? (
@@ -122,7 +119,7 @@ const TrackDeck = () => {
             Load Lyrics
           </button>
         )}
-      </div>
+      </div> */}
     </div>
   );
 };

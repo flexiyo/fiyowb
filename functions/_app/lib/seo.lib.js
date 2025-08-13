@@ -14,7 +14,7 @@ export function renderSeoPage(template, data = {}) {
 export async function renderDefaultPage(url) {
   const canonicalUrl = url.toString();
 
-  const html = defaultTemplate.replace('__CANONICAL_URL__', canonicalUrl);
+  const html = defaultTemplate.replaceAll('__CANONICAL_URL__', canonicalUrl);
   return new Response(html, {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
