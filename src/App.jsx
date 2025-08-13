@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useMemo } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import AppContext from "./context/items/AppContext";
 import UserContext from "./context/items/UserContext";
@@ -27,67 +27,59 @@ import {
 const routesConfig = [
   { path: "/", element: <Home />, auth: true },
   { path: "/search", element: <Search />, auth: true },
-  { path: "/clips", element: <Clips />, auth: true },
-  { path: "/u/:username", element: <Profile />, auth: true },
-  { path: "/music", element: <Music />, auth: true },
-  { path: "/music/:slug", element: <Music />, auth: true },
+  { path: "/clips", element: <Clips />, auth: "both" },
+  { path: "/u/:username", element: <Profile />, auth: "both" },
+  { path: "/music", element: <Music />, auth: "both" },
+  { path: "/music/:slug", element: <Music />, auth: "both" },
   { path: "/direct/t/:roomId", element: <ChatStack />, auth: true },
   { path: "/direct/inbox", element: <ChatStack />, auth: true },
   { path: "/create", element: <Create />, auth: true },
-
   { path: "/auth/login", element: <AuthLogin />, auth: false },
   { path: "/auth/signup", element: <AuthSignup />, auth: false },
-
-  { path: "/music", element: <Music />, auth: "both" },
-  { path: "/music/:slug", element: <Music />, auth: "both" },
-  { path: "/clips", element: <Clips />, auth: "both" },
-  { path: "/u/:username", element: <Profile />, auth: "both" },
-
   { path: "*", element: <NotFound404 />, auth: "both" },
 ];
 
-function getRoutesForAuth(isUserAuthenticated) {
-  return ({ auth }) => {
-    if (auth === "both") return true;
-    if (auth === true) return isUserAuthenticated;
-    if (auth === false) return !isUserAuthenticated;
-    return false;
-  };
-}
-
-const noPaddingRoutePatterns = [
+// Precompile regex for no-padding patterns
+const noPaddingPatterns = [
+  "/music"
   "/clips",
-  "/direct/inbox",
-  "/direct/t/:roomId",
+  "/direct",
+  "/direct",
   "/notifications",
-];
-
-function matchesPattern(pattern, path) {
-  const regex = new RegExp(
+].map((pattern) =>
+  new RegExp(
     "^" +
       pattern
         .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
         .replace(/:\\w+/g, "[^/]+") +
       "$"
-  );
-  return regex.test(path);
-}
+  )
+);
 
 function App() {
   const location = useLocation();
   const { isAppLoading } = useContext(AppContext);
   const { isUserAuthenticated, loading } = useContext(UserContext);
 
+  // Loading screen for both app init + auth check
   if (isAppLoading || loading) {
     return <LoadingScreen />;
   }
 
-  const filteredRoutes = routesConfig.filter(
-    getRoutesForAuth(isUserAuthenticated)
-  );
+  // Filter routes based on auth
+  const filteredRoutes = useMemo(() => {
+    return routesConfig.filter(({ auth }) => {
+      if (auth === "both") return true;
+      if (auth === true) return isUserAuthenticated;
+      if (auth === false) return !isUserAuthenticated;
+      return false;
+    });
+  }, [isUserAuthenticated]);
 
-  const isNoPadding = noPaddingRoutePatterns.some((pattern) =>
-    matchesPattern(pattern, location.pathname)
+  // Match no-padding patterns for current path
+  const isNoPadding = useMemo(
+    () => noPaddingPatterns.some((regex) => regex.test(location.pathname)),
+    [location.pathname]
   );
 
   return (
@@ -104,8 +96,9 @@ function App() {
             <Route key={path} path={path} element={element} />
           ))}
 
+          {/* Redirect unauthenticated "/" to /music */}
           {!isUserAuthenticated && (
-            <Route path="/" element={<Navigate to="/music" />} />
+            <Route path="/" element={<Navigate to="/music" replace />} />
           )}
         </Routes>
       </main>
