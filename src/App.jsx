@@ -41,7 +41,7 @@ const routesConfig = [
 
 // Precompile regex for no-padding patterns
 const noPaddingPatterns = [
-  "/music"
+  "/music",
   "/clips",
   "/direct",
   "/direct",
