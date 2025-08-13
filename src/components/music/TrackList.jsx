@@ -1,6 +1,6 @@
-import { memo, useContext, useState, useCallback } from "react";
+import { memo, useContext, useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowDownCircle } from "lucide-react";
+import { ArrowDownCircle, MoreVertical } from "lucide-react"; // Import MoreVertical
 import MusicContext from "../../context/items/MusicContext";
 
 // ----------------- TrackItem -----------------
@@ -11,6 +11,8 @@ const TrackItem = memo(({ track, loading }) => {
   const [showModal, setShowModal] = useState(false);
   const [quality, setQuality] = useState("Normal");
   const [downloadLoading, setDownloadLoading] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false); // State for the new options menu
+  const menuRef = useRef(null);
 
   const trackTitle = track?.title || track?.name;
   const trackArtists =
@@ -19,6 +21,21 @@ const TrackItem = memo(({ track, loading }) => {
     "Unknown Artist";
   const trackImage = track?.images?.[1]?.url || track?.image?.[1]?.url;
   const trackId = track?.id || track?.videoId;
+  const trackSlug = track?.slug; // Extract slug for share/copy link
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
 
   const handleClick = useCallback(async () => {
     if (loading || !trackId) return;
@@ -26,6 +43,48 @@ const TrackItem = memo(({ track, loading }) => {
     await getTrack(trackId);
     setTrackLoading(false);
   }, [getTrack, trackId, loading]);
+
+  const handleDownloadModal = () => {
+    setMenuOpen(false);
+    setShowModal(true);
+  };
+  
+  const handleCopyLink = useCallback(() => {
+    setMenuOpen(false);
+    if (!trackSlug) {
+      alert("Track link not available.");
+      return;
+    }
+    const link = `https://flexiyo.pages.dev/music/${trackSlug}`;
+    navigator.clipboard.writeText(link).then(() => {
+        // Optional: Show a confirmation toast/message
+        alert("Link copied to clipboard!");
+    });
+  }, [trackSlug]);
+
+  const handleShare = useCallback(async () => {
+    setMenuOpen(false);
+    if (!trackSlug) {
+       alert("Track link not available.");
+       return;
+    }
+    const shareData = {
+      title: `Listen to ${trackTitle} on Flexiyo`,
+      text: `Listen to ${trackTitle} by ${trackArtists} on Flexiyo.`,
+      url: `https://flexiyo.pages.dev/music/${trackSlug}`,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.error("Share failed:", err);
+      }
+    } else {
+      // Fallback to copying the link if Web Share API is not available
+      handleCopyLink();
+    }
+  }, [trackSlug, trackTitle, trackArtists, handleCopyLink]);
 
   const handleDownload = async () => {
     if (!trackId) {
@@ -65,7 +124,7 @@ const TrackItem = memo(({ track, loading }) => {
     <div className="flex">
       <div
         onClick={handleClick}
-        className="flex flex-row items-center w-full gap-4 h-18 mb-3 rounded-md active:scale-98 transition-transform cursor-pointer select-none"
+        className="flex flex-row items-center w-full gap-4 h-18 mb-4 rounded-md active:scale-98 transition-transform cursor-pointer select-none"
       >
         {loading ? (
           <>
@@ -88,29 +147,54 @@ const TrackItem = memo(({ track, loading }) => {
               draggable={false}
             />
             <div className="flex flex-col w-2/3 overflow-hidden text-left">
-              <p className="text-sm dark:text-gray-100 text-gray-900 truncate">
+              <p className="text-xs dark:text-gray-100 text-gray-900 truncate">
                 {trackTitle}
               </p>
-              <p className="text-xs text-gray-400 font-medium truncate dark:text-gray-400">
+              <p className="text-[11px] text-gray-400 font-medium truncate dark:text-gray-400">
                 {trackArtists}
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowModal(true);
-              }}
-              className="ml-auto text-gray-600 dark:text-gray-300 hover:bg-gray-800 p-2 rounded-full transition-colors focus:outline-none focus:ring focus:ring-blue-500"
-              aria-label={`Download ${trackTitle} track`}
-            >
-              <ArrowDownCircle className="w-6 h-6" />
-            </button>
+            {/* Options Menu Button */}
+            <div className="relative ml-auto" ref={menuRef}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuOpen(!menuOpen);
+                }}
+                className="text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 p-2 rounded-full transition-colors focus:outline-none focus:ring focus:ring-blue-500"
+                aria-label={`More options for ${trackTitle}`}
+              >
+                <MoreVertical className="w-5 h-5" />
+              </button>
+              
+              {/* Options Popup Menu */}
+              <AnimatePresence>
+                {menuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                    transition={{ duration: 0.1 }}
+                    className="absolute top-10 right-0 z-20 w-40 bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                    role="menu"
+                    aria-orientation="vertical"
+                  >
+                    <div className="py-1" role="none">
+                      <button onClick={handleDownloadModal} className="w-full text-left block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Download</button>
+                      <button onClick={handleShare} className="w-full text-left block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Share</button>
+                      <button onClick={handleCopyLink} className="w-full text-left block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Copy Link</button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         )}
       </div>
-
+      
+      {/* Download Modal */}
       <AnimatePresence>
         {showModal && (
           <motion.div
@@ -200,10 +284,12 @@ const TrackItem = memo(({ track, loading }) => {
 
 // ----------------- Skeleton Loader for TrackItem -----------------
 const SkeletonTrackItem = () => (
-  <div className="flex flex-row items-center w-full gap-4 cursor-pointer h-18 mb-3 rounded-md active:scale-98 transition-transform select-none">
+  // Updated margin to match TrackItem
+  <div className="flex flex-row items-center w-full gap-4 cursor-pointer h-18 mb-4 rounded-md active:scale-98 transition-transform select-none">
     <div className="w-14 h-14 rounded-lg bg-gray-300 dark:bg-gray-700 animate-pulse" />
     <div className="flex flex-col w-2/3">
-      <div className="h-4 w-2/3 bg-gray-300 dark:bg-gray-700 rounded-md mb-2 animate-pulse" />
+      {/* Updated text skeleton sizes */}
+      <div className="h-3.5 w-2/3 bg-gray-300 dark:bg-gray-700 rounded-md mb-2 animate-pulse" />
       <div className="h-3 w-1/2 bg-gray-300 dark:bg-gray-700 rounded-md animate-pulse" />
     </div>
     <div className="ml-auto">
