@@ -69,7 +69,7 @@ const TrackItem = memo(({ track, loading }) => {
       >
         {loading ? (
           <>
-            <div className="w-14 h-14 rounded-md bg-gray-300 dark:bg-gray-700 animate-pulse" />
+            <div className="w-16 h-16 rounded-md bg-gray-300 dark:bg-gray-700 animate-pulse" />
             <div className="flex flex-col px-3 w-2/3">
               <div className="h-4 w-2/3 bg-gray-300 dark:bg-gray-700 rounded-md mb-2 animate-pulse" />
               <div className="h-3 w-1/2 bg-gray-300 dark:bg-gray-700 rounded-md animate-pulse" />
@@ -81,7 +81,7 @@ const TrackItem = memo(({ track, loading }) => {
             <img
               src={trackImage}
               alt={trackTitle}
-              className={`w-14 h-14 rounded-lg object-cover dark:bg-gray-700 bg-gray-200 ${
+              className={`w-16 h-16 rounded-lg object-cover dark:bg-gray-700 bg-gray-200 ${
                 trackLoading ? "animate-pulse" : ""
               }`}
               loading="lazy"
@@ -132,7 +132,7 @@ const TrackItem = memo(({ track, loading }) => {
                 <img
                   src={trackImage}
                   alt={trackTitle || "Track"}
-                  className="w-14 h-14 rounded-xl object-cover"
+                  className="w-16 h-16 rounded-xl object-cover"
                   draggable={false}
                 />
                 <div>
@@ -201,7 +201,7 @@ const TrackItem = memo(({ track, loading }) => {
 // ----------------- Skeleton Loader for TrackItem -----------------
 const SkeletonTrackItem = () => (
   <div className="flex flex-row items-center w-full gap-4 cursor-pointer h-18 mb-3 rounded-md active:scale-98 transition-transform select-none">
-    <div className="w-14 h-14 rounded-lg bg-gray-300 dark:bg-gray-700 animate-pulse" />
+    <div className="w-16 h-16 rounded-lg bg-gray-300 dark:bg-gray-700 animate-pulse" />
     <div className="flex flex-col w-2/3">
       <div className="h-4 w-2/3 bg-gray-300 dark:bg-gray-700 rounded-md mb-2 animate-pulse" />
       <div className="h-3 w-1/2 bg-gray-300 dark:bg-gray-700 rounded-md animate-pulse" />
