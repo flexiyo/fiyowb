@@ -62,11 +62,12 @@ const Music = () => {
       if (!trackSlug || trackSlug === currentTrack?.slug) return;
 
       try {
-        const videoId = trackSlug.split("_")[1];
+        const videoId = trackSlug.substring(trackSlug.indexOf("_") + 1);
+
         if (videoId) {
           await getTrack(videoId);
           if (!isTrackDeckOpen) {
-            setIsTrackDeckOpen(true)
+            setIsTrackDeckOpen(true);
           }
         }
       } catch (error) {
@@ -81,12 +82,12 @@ const Music = () => {
   useEffect(() => {
     if (!searchQuery) {
       setIsLoading(true);
-      searchTracks("Hindi+Songs").then((tracks) => {
+      searchTracks("Hindi Songs").then((tracks) => {
         setTracks(tracks?.sort(() => 0.5 - Math.random()));
         setIsLoading(false);
       });
     }
-  }, []);
+  }, [searchQuery]);
 
   /** Search Box */
   const openSearchBox = () => {

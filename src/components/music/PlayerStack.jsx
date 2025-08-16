@@ -1,6 +1,6 @@
-import { useState, useContext, useEffect } from "react";
+import { useState, useContext, useEffect, useCallback, useMemo } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Share2 } from "lucide-react";
 import MusicContext from "../../context/items/MusicContext";
 import TrackDeck from "./player/TrackDeck";
@@ -8,82 +8,179 @@ import TrackPlayer from "./player/TrackPlayer";
 
 const PlayerStack = () => {
   const { currentTrack, isTrackDeckOpen, setIsTrackDeckOpen } = useContext(MusicContext);
-  
   const [isTablet, setIsTablet] = useState(window.innerWidth <= 1023);
 
-  useEffect(() => {
-    const handleResize = () => setIsTablet(window.innerWidth <= 1023);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+  // Memoize resize handler to prevent unnecessary re-renders
+  const handleResize = useCallback(() => {
+    setIsTablet(window.innerWidth <= 1023);
   }, []);
 
-  const openTrackDeck = () => setIsTrackDeckOpen(true);
-  const closeTrackDeck = () => setIsTrackDeckOpen(false);
+  useEffect(() => {
+    window.addEventListener("resize", handleResize, { passive: true });
+    return () => window.removeEventListener("resize", handleResize);
+  }, [handleResize]);
+
+  // Memoize handlers to prevent recreations
+  const openTrackDeck = useCallback(() => setIsTrackDeckOpen(true), [setIsTrackDeckOpen]);
+  const closeTrackDeck = useCallback(() => setIsTrackDeckOpen(false), [setIsTrackDeckOpen]);
+
+  // Optimized share handler
+  const handleShare = useCallback(async () => {
+    const shareUrl = `https://flexiyo.pages.dev/music/${currentTrack?.slug}`;
+    
+    try {
+      if (navigator.share && navigator.canShare?.({ url: shareUrl })) {
+        await navigator.share({
+          title: "Listen on Flexiyo",
+          url: shareUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        // You can replace this with a toast notification for better UX
+        console.log("Link copied to clipboard!");
+      }
+    } catch (err) {
+      console.log("Share/copy failed:", err);
+    }
+  }, [currentTrack?.slug]);
+
+  // Optimized drag handler with better threshold
+  const handleDragEnd = useCallback((_, info) => {
+    const threshold = window.innerHeight * 0.25; // 25% of screen height
+    if (info.offset.y > threshold || info.velocity.y > 500) {
+      closeTrackDeck();
+    }
+  }, [closeTrackDeck]);
+
+  // Memoize animation variants to prevent recreations
+  const modalVariants = useMemo(() => ({
+    hidden: { 
+      y: "100%",
+      transition: { 
+        type: "spring", 
+        damping: 30, 
+        stiffness: 300,
+        duration: 0.3
+      }
+    },
+    visible: { 
+      y: 0,
+      transition: { 
+        type: "spring", 
+        damping: 28, 
+        stiffness: 280,
+        duration: 0.4
+      }
+    }
+  }), []);
+
+  const overlayVariants = useMemo(() => ({
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { duration: 0.3, ease: "easeOut" }
+    }
+  }), []);
+
+  // Don't render if no current track or not on tablet
+  if (!currentTrack?.videoId || !isTablet) {
+    return null;
+  }
 
   return (
-    currentTrack?.videoId &&
-    isTablet && (
-      <div className="relative z-50 flex justify-center">
+    <div className="relative z-50 flex justify-center">
         {!isTrackDeckOpen && (
-          <div className="fixed bottom-4 w-full flex justify-center z-40">
+          <div
+            className="fixed bottom-4 w-full flex justify-center z-40"
+          >
             <TrackPlayer onOpenTrackDeck={openTrackDeck} />
           </div>
         )}
-        <Dialog.Root open={isTrackDeckOpen} onOpenChange={setIsTrackDeckOpen}>
-          <Dialog.Portal>
-            <Dialog.Overlay className="fixed inset-0 bg-black/70 backdrop-blur-md transition-opacity" />
-            <Dialog.DialogTitle hidden />
-            <Dialog.Content className="fixed bottom-0 left-0 w-full h-full bg-primary-bg dark:bg-primary-bg-dark rounded-t-2xl shadow-lg z-50 text-white font-SpotifyMedium">
-              <motion.div
-                drag="y"
-                dragConstraints={{ top: 0, bottom: 0 }}
-                dragElastic={0.2}
-                onDragEnd={(_, info) => {
-                  if (info.offset.y > 150) closeTrackDeck();
-                }}
-                initial={{ y: "100%" }}
-                animate={{ y: 0 }}
-                exit={{ y: "100%" }}
-                transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="flex flex-col h-full"
-              >
-                <Dialog.Description hidden />
-                <div className="w-12 h-1.5 bg-white/50 rounded-full mx-auto mt-4 mb-2" />
-                <div className="flex justify-between items-center px-8 py-6">
-                  <h2 className="text-lg font-semibold">Now Playing</h2>
-                  <div className="flex gap-4">
-                    <button
-                      className="text-white"
-                      onClick={() => {
-                        if (navigator.share) {
-                          navigator
-                            .share({
-                              title: "Listen on Flexiyo",
-                              url: `https://flexiyo.pages.dev/music/${currentTrack?.slug}`,
-                            })
-                            .catch((err) => console.log("Error sharing:", err));
-                        } else {
-                          // Fallback: Copy to clipboard
-                          navigator.clipboard
-                            .writeText(
-                              `https://flexiyo.pages.dev/music/${currentTrack?.slug}`
-                            )
-                            .then(() => alert("Link copied to clipboard!"))
-                            .catch(() => alert("Failed to copy link."));
-                        }
+
+      <Dialog.Root open={isTrackDeckOpen} onOpenChange={setIsTrackDeckOpen}>
+        <Dialog.Portal>
+          <AnimatePresence>
+            {isTrackDeckOpen && (
+              <>
+                <Dialog.Overlay asChild>
+                  <motion.div
+                    variants={overlayVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    className="fixed inset-0 backdrop-blur-md z-40"
+                    style={{ 
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)',
+                      backgroundColor: 'rgba(0, 0, 0, 0.3)'
+                    }}
+                  />
+                </Dialog.Overlay>
+
+                <Dialog.Content asChild>
+                  <motion.div
+                    variants={modalVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    className="fixed bottom-0 left-0 w-full h-full bg-primary-bg dark:bg-primary-bg-dark z-50 font-SpotifyMedium overflow-hidden"
+                    style={{
+                      borderTopLeftRadius: '16px',
+                      borderTopRightRadius: '16px',
+                      willChange: 'transform',
+                      contain: 'layout style paint'
+                    }}
+                  >
+                    <motion.div
+                      drag="y"
+                      dragConstraints={{ top: 0, bottom: 0 }}
+                      dragElastic={{ top: 0, bottom: 0.3 }}
+                      dragMomentum={false}
+                      onDragEnd={handleDragEnd}
+                      className="flex flex-col h-full"
+                      style={{ 
+                        touchAction: 'pan-y',
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none'
                       }}
                     >
-                      <Share2 size={30} />
-                    </button>
-                  </div>
-                </div>
-                <TrackDeck />
-              </motion.div>
-            </Dialog.Content>
-          </Dialog.Portal>
-        </Dialog.Root>
-      </div>
-    )
+                      {/* Hidden accessibility elements */}
+                      <Dialog.Title className="sr-only">Now Playing</Dialog.Title>
+                      <Dialog.Description className="sr-only">
+                        Music player with track details and controls
+                      </Dialog.Description>
+
+                      {/* Drag handle */}
+                      <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto my-2 flex-shrink-0" />
+
+                      {/* Header */}
+                      <div className="flex justify-between items-center px-6 py-2 flex-shrink-0">
+                        <h2 className="text-lg font-semibold text-black dark:text-white">
+                          Now Playing
+                        </h2>
+                        <button
+                          onClick={handleShare}
+                          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors active:scale-95"
+                          aria-label="Share track"
+                        >
+                          <Share2 
+                            size={28} 
+                            className="text-gray-700 dark:text-gray-300" 
+                          />
+                        </button>
+                      </div>
+                      <div className="overflow-y-auto transition-smooth overflow-x-hidden">
+                        <TrackDeck />
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                </Dialog.Content>
+              </>
+            )}
+          </AnimatePresence>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </div>
   );
 };
 

@@ -1,6 +1,6 @@
-import { memo, useContext, useState, useCallback } from "react";
+import { memo, useContext, useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowDownCircle } from "lucide-react";
+import { MoreVertical, Share2, Download, Link, X } from "lucide-react";
 import MusicContext from "../../context/items/MusicContext";
 
 // ----------------- TrackItem -----------------
@@ -8,9 +8,11 @@ const TrackItem = memo(({ track, loading }) => {
   const { getTrack, getTrackData } = useContext(MusicContext);
 
   const [trackLoading, setTrackLoading] = useState(false);
-  const [showModal, setShowModal] = useState(false);
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [quality, setQuality] = useState("Normal");
   const [downloadLoading, setDownloadLoading] = useState(false);
+  const menuRef = useRef(null);
 
   const trackTitle = track?.title || track?.name;
   const trackArtists =
@@ -20,12 +22,61 @@ const TrackItem = memo(({ track, loading }) => {
   const trackImage = track?.images?.[1]?.url || track?.image?.[1]?.url;
   const trackId = track?.id || track?.videoId;
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowOptionsMenu(false);
+      }
+    };
+
+    if (showOptionsMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showOptionsMenu]);
+
   const handleClick = useCallback(async () => {
     if (loading || !trackId) return;
     setTrackLoading(true);
     await getTrack(trackId);
     setTrackLoading(false);
   }, [getTrack, trackId, loading]);
+
+  const handleShare = useCallback(async () => {
+    const shareUrl = `https://flexiyo.pages.dev/music/_${trackId}`;
+    try {
+      if (navigator.share && navigator.canShare?.({ url: shareUrl })) {
+        await navigator.share({
+          title: trackTitle,
+          text: "Listen on Flexiyo",
+          url: shareUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        console.log("Link copied to clipboard!");
+      }
+    } catch (err) {
+      console.log("Share failed:", err);
+    }
+    setShowOptionsMenu(false);
+  }, [track, trackId, trackTitle, trackArtists]);
+
+  const handleCopyLink = useCallback(async () => {
+    const shareUrl = `https://flexiyo.pages.dev/music/_${trackId}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      console.log("Link copied to clipboard!");
+    } catch (err) {
+      console.log("Copy failed:", err);
+    }
+    setShowOptionsMenu(false);
+  }, [track, trackId]);
+
+  const handleDownloadClick = useCallback(() => {
+    setShowOptionsMenu(false);
+    setShowDownloadModal(true);
+  }, []);
 
   const handleDownload = async () => {
     if (!trackId) {
@@ -58,156 +109,233 @@ const TrackItem = memo(({ track, loading }) => {
     document.body.removeChild(link);
 
     setDownloadLoading(false);
-    setShowModal(false);
+    setShowDownloadModal(false);
   };
 
+  const menuOptions = [
+    {
+      icon: Share2,
+      label: "Share",
+      onClick: handleShare,
+    },
+    {
+      icon: Download,
+      label: "Download",
+      onClick: handleDownloadClick,
+    },
+    {
+      icon: Link,
+      label: "Copy Link",
+      onClick: handleCopyLink,
+    },
+  ];
+
   return (
-    <div className="flex">
-      <div
-        onClick={handleClick}
-        className="flex flex-row items-center w-full gap-4 h-18 mb-3 rounded-md active:scale-98 transition-transform cursor-pointer select-none"
-      >
+    <>
+      <div className="flex flex-row items-center w-full gap-4 h-18 mb-3 rounded-md relative">
         {loading ? (
           <>
-            <div className="w-15 h-15 rounded-md bg-gray-300 dark:bg-gray-700 animate-pulse" />
-            <div className="flex flex-col px-3 w-2/3">
+            <div className="w-15 h-15 rounded-lg bg-gray-300 dark:bg-gray-700 animate-pulse" />
+            <div className="flex flex-col w-2/3">
               <div className="h-4 w-2/3 bg-gray-300 dark:bg-gray-700 rounded-md mb-2 animate-pulse" />
               <div className="h-3 w-1/2 bg-gray-300 dark:bg-gray-700 rounded-md animate-pulse" />
             </div>
-            <div className="ml-auto w-6 h-6" />
+            <div className="ml-auto">
+              <div className="w-8 h-8 bg-gray-300 dark:bg-gray-700 rounded-full animate-pulse" />
+            </div>
           </>
         ) : (
-          <div className="flex justify-between items-center w-full gap-4">
-            <img
-              src={trackImage}
-              alt={trackTitle}
-              className={`w-15 h-15 rounded-lg object-cover dark:bg-gray-700 bg-gray-200 ${
-                trackLoading ? "animate-pulse" : ""
-              }`}
-              loading="lazy"
-              draggable={false}
-            />
-            <div className="flex flex-col w-2/3 overflow-hidden text-left">
-              <p className="text-sm dark:text-gray-100 text-gray-900 truncate">
-                {trackTitle}
-              </p>
-              <p className="text-xs text-gray-400 font-medium truncate dark:text-gray-400">
-                {trackArtists}
-              </p>
+          <>
+            <div
+              onClick={handleClick}
+              className="flex items-center flex-1 gap-4 cursor-pointer active:scale-98 transition-transform select-none min-w-0"
+            >
+              <img
+                src={trackImage}
+                alt={trackTitle}
+                className={`w-15 h-15 rounded-lg object-cover dark:bg-gray-700 bg-gray-200 flex-shrink-0 ${
+                  trackLoading ? "animate-pulse" : ""
+                }`}
+                loading="lazy"
+                draggable={false}
+              />
+              <div className="flex flex-col flex-1 overflow-hidden text-left min-w-0">
+                <p className="text-sm dark:text-gray-100 text-gray-900 truncate">
+                  {trackTitle}
+                </p>
+                <p className="text-xs text-gray-400 font-medium truncate dark:text-gray-400">
+                  {trackArtists}
+                </p>
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowModal(true);
-              }}
-              className="ml-auto text-gray-600 dark:text-gray-300 hover:bg-gray-800 p-2 rounded-full transition-colors focus:outline-none focus:ring focus:ring-blue-500"
-              aria-label={`Download ${trackTitle} track`}
-            >
-              <ArrowDownCircle className="w-6 h-6" />
-            </button>
-          </div>
+            <div className="relative flex-shrink-0" ref={menuRef}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowOptionsMenu(!showOptionsMenu);
+                }}
+                className="text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                aria-label={`Options for ${trackTitle}`}
+              >
+                <MoreVertical className="w-5 h-5" />
+              </button>
+
+              <AnimatePresence>
+                {showOptionsMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                    className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden min-w-[160px]"
+                  >
+                    {menuOptions.map((option, index) => {
+                      const IconComponent = option.icon;
+                      return (
+                        <button
+                          key={option.label}
+                          onClick={option.onClick}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
+                        >
+                          <IconComponent className="w-4 h-4" />
+                          {option.label}
+                        </button>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </>
         )}
       </div>
 
+      {/* Download Quality Modal */}
       <AnimatePresence>
-        {showModal && (
+        {showDownloadModal && (
           <motion.div
-            className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center px-4"
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center px-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            onClick={() => setShowDownloadModal(false)}
             aria-modal="true"
             role="dialog"
           >
             <motion.div
-              className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-2xl max-w-md w-full relative"
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 350, damping: 20 }}
+              className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full relative overflow-hidden"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center gap-4 mb-6">
-                <img
-                  src={trackImage}
-                  alt={trackTitle || "Track"}
-                  className="w-15 h-15 rounded-xl object-cover"
-                  draggable={false}
-                />
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate overflow-hidden w-[50vw] max-w-xs">
-                    {trackTitle}
-                  </h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 truncate w-[50vw] max-w-xs">
-                    {trackArtists}
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Download Track
+                </h2>
+                <button
+                  onClick={() => setShowDownloadModal(false)}
+                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
+                <div className="flex items-center gap-4 mb-6">
+                  <img
+                    src={trackImage}
+                    alt={trackTitle || "Track"}
+                    className="w-16 h-16 rounded-xl object-cover"
+                    draggable={false}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-medium text-gray-900 dark:text-white truncate">
+                      {trackTitle}
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                      {trackArtists}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <label
+                    htmlFor="quality"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3"
+                  >
+                    Audio Quality
+                  </label>
+                  <select
+                    id="quality"
+                    value={quality}
+                    onChange={(e) => setQuality(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    disabled={downloadLoading}
+                  >
+                    <option value="Low">Low Quality (96 kbps)</option>
+                    <option value="Normal">Normal Quality (160 kbps)</option>
+                    <option value="High">High Quality (320 kbps)</option>
+                  </select>
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    A new tab will open to start the download.
                   </p>
                 </div>
-              </div>
 
-              <div className="mb-6">
-                <label
-                  htmlFor="quality"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                >
-                  Audio Quality
-                </label>
-                <select
-                  id="quality"
-                  value={quality}
-                  onChange={(e) => setQuality(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-white border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring focus:ring-blue-500 transition"
-                  disabled={downloadLoading}
-                >
-                  <option value="Low">Low</option>
-                  <option value="Normal">Normal</option>
-                  <option value="High">High</option>
-                </select>
-                <p className="mt-3 text-gray-400 dark:text-gray-500 text-xs">
-                  A new tab might open to start the download.
-                </p>
-              </div>
-
-              <div className="flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  disabled={downloadLoading}
-                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDownload}
-                  disabled={downloadLoading}
-                  className={`px-4 py-2 rounded-md font-medium text-white transition ${
-                    downloadLoading
-                      ? "bg-blue-400 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700"
-                  }`}
-                >
-                  {downloadLoading ? "Preparing..." : "Download"}
-                </button>
+                {/* Actions */}
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowDownloadModal(false)}
+                    disabled={downloadLoading}
+                    className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDownload}
+                    disabled={downloadLoading}
+                    className={`flex-1 px-4 py-3 rounded-lg font-medium text-white transition-colors ${
+                      downloadLoading
+                        ? "bg-blue-400 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
+                    }`}
+                  >
+                    {downloadLoading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Preparing...
+                      </span>
+                    ) : (
+                      "Download"
+                    )}
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 });
 
 // ----------------- Skeleton Loader for TrackItem -----------------
 const SkeletonTrackItem = () => (
-  <div className="flex flex-row items-center w-full gap-4 cursor-pointer h-18 mb-3 rounded-md active:scale-98 transition-transform select-none">
+  <div className="flex flex-row items-center w-full gap-4 h-18 mb-3 rounded-md">
     <div className="w-15 h-15 rounded-lg bg-gray-300 dark:bg-gray-700 animate-pulse" />
-    <div className="flex flex-col w-2/3">
+    <div className="flex flex-col w-full">
       <div className="h-4 w-2/3 bg-gray-300 dark:bg-gray-700 rounded-md mb-2 animate-pulse" />
       <div className="h-3 w-1/2 bg-gray-300 dark:bg-gray-700 rounded-md animate-pulse" />
     </div>
     <div className="ml-auto">
-      <div className="w-6 h-6 bg-gray-300 dark:bg-gray-700 rounded-full animate-pulse" />
+      <div className="w-8 h-8 bg-gray-300 dark:bg-gray-700 rounded-full animate-pulse" />
     </div>
   </div>
 );
@@ -247,9 +375,10 @@ const TrackList = memo(({ tracks = [], loading, ref, onScrollEnd }) => {
         </>
       ) : (
         !loading && (
-          <p className="text-center text-gray-500 dark:text-gray-400 mt-10">
-            No tracks available.
-          </p>
+          <div className="flex flex-col items-center justify-center h-64 text-gray-500 dark:text-gray-400">
+            <p className="text-lg font-medium mb-2">No tracks found</p>
+            <p className="text-sm">Try searching for something else</p>
+          </div>
         )
       )}
     </div>
