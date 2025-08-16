@@ -93,9 +93,9 @@ const useMusicUtils = ({
         `${YTMUSIC_BASE_URI}/track?videoId=${videoId}`
       );
       const track = ytRes?.data;
-      if (!yt?.title) throw new Error("No track found.");
+      if (!track?.title) throw new Error("No track found.");
 
-      track.image = images?.[3]?.url || images?.[2]?.url,
+      track.image = images?.[images.length - 1]?.url;
       track.createdAt = new Date(),
 
       await cacheTrackData(track);

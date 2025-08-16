@@ -190,7 +190,16 @@ export async function getTrackData(videoId, env, ssr) {
       saavnTrack.duration % 60
     ).padStart(2, "0")}`;
 
-    const images = found.images;
+    const imagesWithSizes = images?.flatMap(img => [
+      ...img,
+      img.map(i => ({
+        ...i, url: i.url.replace("w60-h60", "w400-h400"), width: 400, height: 400
+      })),
+      img.map(i => ({
+        ...i, url: i.url.replace("w60-h60", "w600-h600"), width: 600, height: 600
+      }))
+    ]).flat();
+    
     const playsCount = found.playsCount;
 
     const baseSlug = title
