@@ -86,7 +86,7 @@ const useMusicUtils = ({
       const track = ytRes?.data;
       if (!track?.title) throw new Error("No track found.");
 
-      track.image = images?.[images.length - 1]?.url;
+      track.image = track.images?.[track.images.length - 1]?.url;
       track.createdAt = new Date(),
 
       await cacheTrackData(track);

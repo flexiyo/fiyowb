@@ -10,7 +10,7 @@ async function fetchYTMusic(endpoint, body) {
       method: "POST",
       headers: {
         "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -22,7 +22,7 @@ async function fetchYTMusic(endpoint, body) {
           },
         },
       }),
-    }
+    },
   );
   if (!response.ok) throw new Error(`YT Music API Error: ${response.status}`);
   return response.json();
@@ -33,74 +33,79 @@ async function fetchYTMusic(endpoint, body) {
 // -----------------------------
 export async function searchTracksInternal(term, continuation = null) {
   const body = continuation
-  ? {
-    continuation
-  }: {
-    query: term,
-    params: "EgWKAQIIAWoSEAMQBBAJEA4QChAFEBEQEBAV",
-  };
+    ? {
+        continuation,
+      }
+    : {
+        query: term,
+        params: "EgWKAQIIAWoSEAMQBBAJEA4QChAFEBEQEBAV",
+      };
 
   const ytMusicData = await fetchYTMusic("search", body);
   if (!ytMusicData) throw new Error("YouTube Music API failed");
 
   const musicShelf =
-  ytMusicData?.continuationContents?.musicShelfContinuation ??
-  ytMusicData?.contents?.tabbedSearchResultsRenderer?.tabs?.[0]?.tabRenderer
-  ?.content?.sectionListRenderer?.contents?.find(
-    (c) => c?.musicShelfRenderer
-  )?.musicShelfRenderer;
+    ytMusicData?.continuationContents?.musicShelfContinuation ??
+    ytMusicData?.contents?.tabbedSearchResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents?.find(
+      (c) => c?.musicShelfRenderer,
+    )?.musicShelfRenderer;
 
   if (!musicShelf?.contents)
     return {
-    results: [],
-    continuation: null,
-  };
+      results: [],
+      continuation: null,
+    };
 
   const results = musicShelf.contents
-  .map(({
-    musicResponsiveListItemRenderer: track
-  }) => {
-    if (!track?.playlistItemData?.videoId) return null;
+    .map(({ musicResponsiveListItemRenderer: track }) => {
+      if (!track?.playlistItemData?.videoId) return null;
 
-    const title =
-    track.flexColumns?.[0]?.musicResponsiveListItemFlexColumnRenderer?.text
-    ?.runs?.[0]?.text || "";
+      const title =
+        track.flexColumns?.[0]?.musicResponsiveListItemFlexColumnRenderer?.text
+          ?.runs?.[0]?.text || "";
 
-    const artistsRaw =
-    track.flexColumns?.[1]?.musicResponsiveListItemFlexColumnRenderer?.text
-    ?.runs || [];
-    const artists = artistsRaw.map((r) => r.text).join(" • ");
+      const artistsRaw =
+        track.flexColumns?.[1]?.musicResponsiveListItemFlexColumnRenderer?.text
+          ?.runs || [];
+      const artists = artistsRaw.map((r) => r.text).join(" • ");
 
-    let playsCount =
-    track.flexColumns?.[2]?.musicResponsiveListItemFlexColumnRenderer?.text
-    ?.runs?.[0]?.text || null;
-    if (playsCount) {
-      playsCount = parseInt(playsCount.replace(/\D/g, ""), 10) || null;
-    }
+      let playsCount =
+        track.flexColumns?.[2]?.musicResponsiveListItemFlexColumnRenderer?.text
+          ?.runs?.[0]?.text || null;
+      if (playsCount) {
+        playsCount = parseInt(playsCount.replace(/\D/g, ""), 10) || null;
+      }
 
-    const thumbs =
-    track.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails || [];
-    const images = thumbs.flatMap(t => [
-      ...t,
-      {
-        url: t[0].url.replace("w60-h60", "w400-h400"), width: 400, height: 400
-      },
-      {
-        url: t[0].url.replace("w60-h60", "w600-h600"), width: 600, height: 600
-      }]);
+      const thumbs =
+        track.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails || [];
+      const images = [
+        ...thumbs,
+        {
+          ...thumbs[0],
+          url: thumbs[0].url.replace("w60-h60", "w400-h400"),
+          width: 400,
+          height: 400,
+        },
+        {
+          ...thumbs[0],
+          url: thumbs[0].url.replace("w60-h60", "w600-h600"),
+          width: 600,
+          height: 600,
+        },
+      ];
 
-    return {
-      videoId: track.playlistItemData.videoId,
-      title,
-      artists,
-      playsCount,
-      images,
-    };
-  })
-  .filter(Boolean);
+      return {
+        videoId: track.playlistItemData.videoId,
+        title,
+        artists,
+        playsCount,
+        images,
+      };
+    })
+    .filter(Boolean);
 
   const next =
-  musicShelf?.continuations?.[0]?.nextContinuationData?.continuation || null;
+    musicShelf?.continuations?.[0]?.nextContinuationData?.continuation || null;
 
   return {
     results,
@@ -113,31 +118,30 @@ export async function searchTracksInternal(term, continuation = null) {
 // -----------------------------
 async function getRelativeTrackData(videoId) {
   try {
-    const ytMusicData = await fetchYTMusic("next",
-      {
-        videoId
-      });
+    const ytMusicData = await fetchYTMusic("next", {
+      videoId,
+    });
     if (!ytMusicData?.contents || !ytMusicData?.currentVideoEndpoint)
       throw new Error("No video details available");
 
     const tabRenderer =
-    ytMusicData.contents.singleColumnMusicWatchNextResultsRenderer
-    ?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs;
+      ytMusicData.contents.singleColumnMusicWatchNextResultsRenderer
+        ?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs;
 
-    const playlistId = tabRenderer
-    ?.find((tab) => tab.tabRenderer?.title === "Up next")
-    ?.tabRenderer?.content?.musicQueueRenderer?.content?.playlistPanelRenderer
-    ?.contents?.[1]?.automixPreviewVideoRenderer?.content
-    ?.automixPlaylistVideoRenderer?.navigationEndpoint?.watchPlaylistEndpoint
-    ?.playlistId;
+    const playlistId = tabRenderer?.find(
+      (tab) => tab.tabRenderer?.title === "Up next",
+    )?.tabRenderer?.content?.musicQueueRenderer?.content?.playlistPanelRenderer
+      ?.contents?.[1]?.automixPreviewVideoRenderer?.content
+      ?.automixPlaylistVideoRenderer?.navigationEndpoint?.watchPlaylistEndpoint
+      ?.playlistId;
 
-    const browseId = tabRenderer
-    ?.find((tab) => tab.tabRenderer?.title === "Lyrics")
-    ?.tabRenderer?.endpoint?.browseEndpoint?.browseId;
+    const browseId = tabRenderer?.find(
+      (tab) => tab.tabRenderer?.title === "Lyrics",
+    )?.tabRenderer?.endpoint?.browseEndpoint?.browseId;
 
     return {
       playlistId,
-      browseId
+      browseId,
     };
   } catch {
     return null;
@@ -156,44 +160,48 @@ export async function getTrackData(videoId, env, ssr) {
 
   try {
     const oembedResponse = await fetch(
-      `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
-    ).then((r) => (r.ok ? r.json(): null));
+      `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`,
+    ).then((r) => (r.ok ? r.json() : null));
 
-    let title = (oembedResponse?.title || "").replace(/\|.*$|\(.*?\)|\[.*?\]/g, "");
+    let title = (oembedResponse?.title || "").replace(
+      /\|.*$|\(.*?\)|\[.*?\]/g,
+      "",
+    );
 
     if (!title) throw new Error("No valid title from YouTube");
 
     const saavnRes = await fetch(
       `https://fiyosaavn.vercel.app/api/search/songs?query=${encodeURIComponent(
-        title
-      )}&limit=1`
+        title,
+      )}&limit=1`,
     ).then((r) => r.json());
 
     const saavnTrack = saavnRes?.data?.results?.[0];
     if (!saavnTrack) throw new Error("No track found on Saavn");
 
     const downloadUrl =
-    saavnTrack.downloadUrl?.map((d) => ({
-      quality: d.quality,
-      url: d.url,
-    })) || [];
+      saavnTrack.downloadUrl?.map((d) => ({
+        quality: d.quality,
+        url: d.url,
+      })) || [];
 
     const fallback = await searchTracksInternal(title);
     const found =
-    fallback?.results?.find((i) => i.videoId === videoId) ||
-    fallback?.results?.[0];
+      fallback?.results?.find((i) => i.videoId === videoId) ||
+      fallback?.results?.[0];
     if (!found) throw new Error("Track not found via fallback");
 
     const parts = found.artists?.split(" • ") || [];
     const artists =
-    parts.length > 1
-    ? parts.slice(0, -1).join(" • "): parts[0] || "Unknown Artists";
+      parts.length > 1
+        ? parts.slice(0, -1).join(" • ")
+        : parts[0] || "Unknown Artists";
 
     const duration = `${Math.floor(saavnTrack.duration / 60)}:${String(
-      saavnTrack.duration % 60
+      saavnTrack.duration % 60,
     ).padStart(2, "0")}`;
 
-    const images = found.images
+    const images = found.images;
 
     const playsCount = found.playsCount;
 
@@ -203,15 +211,16 @@ export async function getTrackData(videoId, env, ssr) {
       .replace(/^-+|-+$/g, "")
       .slice(0, 15);
     const slug = `${baseSlug}_${videoId}`;
-    
+
     const playedAt = new Date().toISOString();
 
     if (env?.FIYOWB_MUSIC_SITEMAP) {
       env.FIYOWB_MUSIC_SITEMAP.put(
         `${videoId}`,
         JSON.stringify({
-          slug, playedAt
-        })
+          slug,
+          playedAt,
+        }),
       ).catch(console.error);
     }
 
@@ -236,7 +245,7 @@ export async function getTrackData(videoId, env, ssr) {
     const relativeData = await getRelativeTrackData(videoId);
     const merged = {
       ...baseTrack,
-      ...(relativeData || {})
+      ...(relativeData || {}),
     };
 
     trackCache.set(videoId, merged);
@@ -258,29 +267,30 @@ export async function getNextTrackData(videoId, playlistId, playedTrackIds) {
   });
 
   const playlist =
-  ytMusicData?.contents?.singleColumnMusicWatchNextResultsRenderer
-  ?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs?.[0]?.tabRenderer
-  ?.content?.musicQueueRenderer?.content?.playlistPanelRenderer?.contents;
+    ytMusicData?.contents?.singleColumnMusicWatchNextResultsRenderer
+      ?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs?.[0]?.tabRenderer
+      ?.content?.musicQueueRenderer?.content?.playlistPanelRenderer?.contents;
 
   if (!playlist) throw new Error("No playlist available");
 
   const playedIds = new Set(playedTrackIds || []);
   const tracks = playlist.filter(
     (item) =>
-    item?.playlistPanelVideoRenderer &&
-    !playedIds.has(item.playlistPanelVideoRenderer.videoId)
+      item?.playlistPanelVideoRenderer &&
+      !playedIds.has(item.playlistPanelVideoRenderer.videoId),
   );
 
-  if (tracks.length === 0) return {
-    videoId: null
-  };
+  if (tracks.length === 0)
+    return {
+      videoId: null,
+    };
 
   const nextTrackId =
-  tracks[1]?.playlistPanelVideoRenderer?.navigationEndpoint?.watchEndpoint
-  ?.videoId;
+    tracks[1]?.playlistPanelVideoRenderer?.navigationEndpoint?.watchEndpoint
+      ?.videoId;
 
   return {
-    videoId: nextTrackId
+    videoId: nextTrackId,
   };
 }
 
@@ -290,11 +300,11 @@ export async function getNextTrackData(videoId, playlistId, playedTrackIds) {
 export async function getTrackLyricsData(browseId) {
   if (!browseId) return "No lyrics available for this song.";
   const ytMusicData = await fetchYTMusic("browse", {
-    browseId
+    browseId,
   });
   const lyrics =
-  ytMusicData?.contents?.sectionListRenderer?.contents?.[0]
-  ?.musicDescriptionShelfRenderer?.description?.runs?.[0]?.text;
+    ytMusicData?.contents?.sectionListRenderer?.contents?.[0]
+      ?.musicDescriptionShelfRenderer?.description?.runs?.[0]?.text;
   return lyrics || "Couldn't load the lyrics for this song.";
 }
 
@@ -302,25 +312,26 @@ export async function getTrackLyricsData(browseId) {
 // Suggestions
 // -----------------------------
 export async function getSuggestionsData(term) {
-  if (!term) return {
-    results: []
-  };
+  if (!term)
+    return {
+      results: [],
+    };
   const ytMusicData = await fetchYTMusic("music/get_search_suggestions", {
     input: term,
   });
   const suggestions =
-  ytMusicData?.contents?.[0]?.searchSuggestionsSectionRenderer?.contents
-  ?.map((content) => ({
-    suggestionText:
-    content.searchSuggestionRenderer?.suggestion?.runs?.[0]?.text,
-    suggestionQuery:
-    content.searchSuggestionRenderer?.navigationEndpoint?.searchEndpoint
-    ?.query,
-  }))
-  .filter((c) => c.suggestionText && c.suggestionQuery) || [];
+    ytMusicData?.contents?.[0]?.searchSuggestionsSectionRenderer?.contents
+      ?.map((content) => ({
+        suggestionText:
+          content.searchSuggestionRenderer?.suggestion?.runs?.[0]?.text,
+        suggestionQuery:
+          content.searchSuggestionRenderer?.navigationEndpoint?.searchEndpoint
+            ?.query,
+      }))
+      .filter((c) => c.suggestionText && c.suggestionQuery) || [];
 
   return {
-    results: suggestions
+    results: suggestions,
   };
 }
 
@@ -338,7 +349,7 @@ function generateUrlEntry(slug, date) {
 
 function wrapInSitemap(entries) {
   return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${entries.join(
-    ""
+    "",
   )}</urlset>`;
 }
 
@@ -349,13 +360,13 @@ async function buildDynamicSitemap(kvStore) {
     const {
       keys,
       list_complete,
-      cursor: nextCursor
+      cursor: nextCursor,
     } = await kvStore.list({
-        cursor,
-        limit: 100,
-      });
+      cursor,
+      limit: 100,
+    });
     const rawDataEntries = await Promise.all(
-      keys.map((k) => kvStore.get(k.name))
+      keys.map((k) => kvStore.get(k.name)),
     );
     for (const rawData of rawDataEntries) {
       if (!rawData) continue;
@@ -377,18 +388,17 @@ async function buildDynamicSitemap(kvStore) {
 
 export async function handleSitemap(env) {
   const kvStore = env.FIYOWB_MUSIC_SITEMAP;
-  const [staticSitemap,
-    staticTimestamp] = await Promise.all([
-      kvStore.get(STATIC_SITEMAP_KEY),
-      kvStore.get(STATIC_SITEMAP_TIMESTAMP_KEY),
-    ]);
+  const [staticSitemap, staticTimestamp] = await Promise.all([
+    kvStore.get(STATIC_SITEMAP_KEY),
+    kvStore.get(STATIC_SITEMAP_TIMESTAMP_KEY),
+  ]);
 
   if (staticSitemap && staticTimestamp) {
     const ageInMs = Date.now() - new Date(staticTimestamp).getTime();
     if (ageInMs < SITEMAP_EXPIRY_DAYS * 24 * 60 * 60 * 1000) {
       return new Response(staticSitemap, {
         headers: {
-          "Content-Type": "application/xml"
+          "Content-Type": "application/xml",
         },
       });
     } else {
@@ -400,9 +410,11 @@ export async function handleSitemap(env) {
   }
 
   const sitemap = await buildDynamicSitemap(kvStore);
-  const keyCount = (await kvStore.list({
-    limit: 1
-  })).keys.length;
+  const keyCount = (
+    await kvStore.list({
+      limit: 1,
+    })
+  ).keys.length;
 
   if (keyCount >= STATIC_THRESHOLD) {
     Promise.all([
@@ -413,7 +425,7 @@ export async function handleSitemap(env) {
 
   return new Response(sitemap, {
     headers: {
-      "Content-Type": "application/xml"
+      "Content-Type": "application/xml",
     },
   });
 }

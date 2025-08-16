@@ -34,7 +34,9 @@ const TrackDeck = () => {
           className="w-full h-full aspect-square border-none rounded-xl bg-secondary-bg dark:bg-secondary-bg-dark object-cover"
         />
         <div className="flex flex-col items-start justify-start w-full px-2 pt-4 gap-2">
-          <span className="text-2xl line-clamp-2 text-black dark:text-white">{currentTrack?.title}</span>
+          <span className="text-2xl line-clamp-2 text-black dark:text-white">
+            {currentTrack?.title}
+          </span>
           <span className="text-sm text-gray-500 line-clamp-3">
             {currentTrack?.artists}
           </span>
@@ -97,12 +99,10 @@ const TrackDeck = () => {
           </svg>
         </button>
       </div>
-      <div
-        className="flex flex-col justify-center rounded-xl p-4 w-full bg-secondary-bg dark:bg-secondary-bg-dark gap-4"
-      >
-        <h2 className="text-2xl">Lyrics</h2>
+      <div className="flex flex-col justify-center rounded-xl p-4 w-full bg-secondary-bg dark:bg-secondary-bg-dark gap-4">
+        <h2 className="text-2xl text-black dark:text-white">Lyrics</h2>
         {currentTrack?.lyrics ? (
-          <p className="text-lg text-gray-300 dark:text-gray-200 max-h-[calc(100vh-300px)] break-words overflow-y-auto no-scrollbar">
+          <p className="text-lg text-gray-900 dark:text-gray-200 max-h-[calc(100vh-300px)] break-words overflow-y-auto no-scrollbar">
             {currentTrack?.lyrics.split(/\n/).map((line, index) => (
               <React.Fragment key={index}>
                 {line}
@@ -112,7 +112,7 @@ const TrackDeck = () => {
           </p>
         ) : (
           <button
-            className="active:opacity-80 transition-opacity border border-black dark:border-white px-4 py-2 rounded-full"
+            className="active:opacity-80 transition-opacity border border-black dark:border-white px-4 py-2 rounded-full text-black dark:text-white"
             onClick={loadLyrics}
             title="Load Lyrics"
           >
