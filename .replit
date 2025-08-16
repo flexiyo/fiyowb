@@ -3,7 +3,7 @@ run = "npm run dev"
 
 [nix]
 channel = "stable-25_05"
-packages = ["nano", "gh"]
+packages = ["nano"]
 
 [deployment]
 run = ["sh", "-c", "npm run dev"]

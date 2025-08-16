@@ -67,7 +67,7 @@ export async function searchTracksInternal(term, continuation = null) {
       const artistsRaw =
         track.flexColumns?.[1]?.musicResponsiveListItemFlexColumnRenderer?.text
           ?.runs || [];
-      const artists = artistsRaw.map((r) => r.text).join(" ");
+      const artists = artistsRaw.map((r) => r.text).join(" • ");
 
       let playsCount =
         track.flexColumns?.[2]?.musicResponsiveListItemFlexColumnRenderer?.text
@@ -160,30 +160,20 @@ export async function getTrackData(videoId, env, ssr) {
 
   try {
     const oembedResponse = await fetch(
-      `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
+      `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`,
     ).then((r) => (r.ok ? r.json() : null));
 
-    const title = oembedResponse?.title;
+    let title = (oembedResponse?.title || "").replace(
+      /\|.*$|\(.*?\)|\[.*?\]/g,
+      "",
+    );
+
     if (!title) throw new Error("No valid title from YouTube");
 
-    // Fallback to get proper track info
-    const fallback = await searchTracksInternal(title);
-    const found =
-      fallback?.results?.find((i) => i.videoId === videoId) ||
-      fallback?.results?.[0];
-    if (!found) throw new Error("Track not found via fallback");
-
-    const { artists, images, playsCount } = found;
-
-    // Extract first artist ONLY for Saavn query
-    const firstArtist = artists?.split("•")[0].split(",")[0].split("&")[0].trim();
-
-    // Saavn search: clean title + first artist
-    const saavnQuery = `${title.replace(/\(.*?\)/g, "").trim()} ${firstArtist}`;
     const saavnRes = await fetch(
       `https://fiyosaavn.vercel.app/api/search/songs?query=${encodeURIComponent(
-        saavnQuery
-      )}&limit=1`
+        title,
+      )}&limit=1`,
     ).then((r) => r.json());
 
     const saavnTrack = saavnRes?.data?.results?.[0];
@@ -195,9 +185,25 @@ export async function getTrackData(videoId, env, ssr) {
         url: d.url,
       })) || [];
 
+    const fallback = await searchTracksInternal(title);
+    const found =
+      fallback?.results?.find((i) => i.videoId === videoId) ||
+      fallback?.results?.[0];
+    if (!found) throw new Error("Track not found via fallback");
+
+    const parts = found.artists?.split(" • ") || [];
+    const artists =
+      parts.length > 1
+        ? parts.slice(0, -1).join(" • ")
+        : parts[0] || "Unknown Artists";
+
     const duration = `${Math.floor(saavnTrack.duration / 60)}:${String(
-      saavnTrack.duration % 60
+      saavnTrack.duration % 60,
     ).padStart(2, "0")}`;
+
+    const images = found.images;
+
+    const playsCount = found.playsCount;
 
     const baseSlug = title
       .toLowerCase()
@@ -211,7 +217,10 @@ export async function getTrackData(videoId, env, ssr) {
     if (env?.FIYOWB_MUSIC_SITEMAP) {
       env.FIYOWB_MUSIC_SITEMAP.put(
         `${videoId}`,
-        JSON.stringify({ slug, playedAt })
+        JSON.stringify({
+          slug,
+          playedAt,
+        }),
       ).catch(console.error);
     }
 

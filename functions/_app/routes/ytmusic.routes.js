@@ -4,10 +4,13 @@ import {
   getTrackData,
   getNextTrackData,
   getTrackLyricsData,
-  getSuggestionsData
+  getSuggestionsData,
+  handleSitemap
 } from "../lib/ytmusic.lib.js";
 
 const ytMusicRoutes = new Hono();
+
+ytMusicRoutes.get("/sitemap.xml", ({ env }) => handleSitemap(env));
 
 ytMusicRoutes.get("/search", async (c) => {
   const term = c.req.query("term");

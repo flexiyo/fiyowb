@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { renderDefaultPage, renderMusicPage, renderUserPage } from "../lib/seo.lib.js";
-import { handleSitemap } from "../lib/ytmusic.lib.js"
+
 const seoRoutes = new Hono();
 
 const botKeywords = [
@@ -37,8 +37,6 @@ export function isBot(userAgent = "") {
   const ua = userAgent.toLowerCase();
   return botKeywords.some((keyword) => ua.includes(keyword));
 }
-
-seoRoutes.get("/music/sitemap.xml", ({ env }) => handleSitemap(env));
 
 // SEO route for music page
 seoRoutes.get("/music/:slug", async (c) => {
