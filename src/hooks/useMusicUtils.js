@@ -48,15 +48,6 @@ const useMusicUtils = ({
     const readStore = readTx.objectStore("tracks");
     const track = await readStore.get(videoId);
     await readTx.done;
-
-    if (track?.createdAt < new Date().getTime() - 6 * 60 * 60 * 1000) {
-      const writeTx = db.transaction("tracks", "readwrite");
-      const writeStore = writeTx.objectStore("tracks");
-      await writeStore.delete(videoId);
-      await writeTx.done;
-      return null;
-    }
-
     return track;
   };
 

@@ -80,11 +80,14 @@ export async function searchTracksInternal(term, continuation = null) {
 
     const thumbs =
     track.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails || [];
-    const images = thumbs.map((t) => ({
-      url: t.url,
-      width: t.width,
-      height: t.height,
-    }));
+    const images = thumbs.flatMap(t => [
+      ...t,
+      {
+        url: t[0].url.replace("w60-h60", "w400-h400"), width: 400, height: 400
+      },
+      {
+        url: t[0].url.replace("w60-h60", "w600-h600"), width: 600, height: 600
+      }]);
 
     return {
       videoId: track.playlistItemData.videoId,
@@ -190,24 +193,17 @@ export async function getTrackData(videoId, env, ssr) {
       saavnTrack.duration % 60
     ).padStart(2, "0")}`;
 
-    const imagesWithSizes = images?.flatMap(img => [
-      ...img,
-      img.map(i => ({
-        ...i, url: i.url.replace("w60-h60", "w400-h400"), width: 400, height: 400
-      })),
-      img.map(i => ({
-        ...i, url: i.url.replace("w60-h60", "w600-h600"), width: 600, height: 600
-      }))
-    ]).flat();
-    
+    const images = found.images
+
     const playsCount = found.playsCount;
 
     const baseSlug = title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 15);
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 15);
     const slug = `${baseSlug}_${videoId}`;
+    
     const playedAt = new Date().toISOString();
 
     if (env?.FIYOWB_MUSIC_SITEMAP) {
