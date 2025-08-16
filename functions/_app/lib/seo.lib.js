@@ -51,7 +51,7 @@ export async function renderMusicPage(slug, env) {
     } = trackData;
 
     const canonical = `https://flexiyo.pages.dev/music/${slug}`;
-    const image = images?.[2]?.url || "";
+    const image = images?.[1]?.url || "";
     const description = `Listen to ${title} by ${artists
     .split("•")[0]
     .trim()}. Enjoy high-quality audio, view lyrics, and more on Flexiyo Music.`;

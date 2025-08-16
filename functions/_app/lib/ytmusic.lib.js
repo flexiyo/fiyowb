@@ -67,7 +67,7 @@ export async function searchTracksInternal(term, continuation = null) {
       const artistsRaw =
         track.flexColumns?.[1]?.musicResponsiveListItemFlexColumnRenderer?.text
           ?.runs || [];
-      const artists = artistsRaw.map((r) => r.text).join(" • ");
+      const artists = artistsRaw.map((r) => r.text).join(" ");
 
       let playsCount =
         track.flexColumns?.[2]?.musicResponsiveListItemFlexColumnRenderer?.text
@@ -76,8 +76,7 @@ export async function searchTracksInternal(term, continuation = null) {
         playsCount = parseInt(playsCount.replace(/\D/g, ""), 10) || null;
       }
 
-      const thumbs =
-        track.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails || [];
+      const thumbs = track.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails || [];
       const images = [
         ...thumbs,
         {
