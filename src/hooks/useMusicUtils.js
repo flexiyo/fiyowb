@@ -3,8 +3,7 @@ import {
   openDB
 } from "idb";
 import {
-  YTMUSIC_BASE_URI,
-  FIYOSAAVN_BASE_URI
+  YTMUSIC_BASE_URI
 } from "../constants.js";
 
 const useMusicUtils = ({
@@ -85,59 +84,20 @@ const useMusicUtils = ({
   /** Get Track Data */
   const getTrackData = async (videoId, tolerance = 10) => {
     try {
-      // 1. Check cache
       const cached = await getCachedTrackData(videoId);
       if (cached) return cached;
 
-      // 2. Get metadata from YT Music
       const {
         data: ytRes
       } = await axios.get(
         `${YTMUSIC_BASE_URI}/track?videoId=${videoId}`
       );
-      const yt = ytRes?.data;
-      if (!yt?.title) throw new Error("No valid YT Music track");
+      const track = ytRes?.data;
+      if (!yt?.title) throw new Error("No track found.");
 
-      // 3. Search on JioSaavn
-      const {
-        data: saavnRes
-      } = await axios.get(
-        `${FIYOSAAVN_BASE_URI}/search/songs?query=${encodeURIComponent(yt.title)}`
-      );
-      let tracks = saavnRes?.data?.results || [];
-      if (!tracks.length) throw new Error("No Saavn results");
+      track.image = images?.[3]?.url || images?.[2]?.url,
+      track.createdAt = new Date(),
 
-      // 4. Pick best match by duration
-      let saavn = tracks[0];
-      if (yt.duration) {
-        saavn = tracks.find(
-          t => Math.abs(t.duration - yt.duration) <= tolerance
-        ) || saavn;
-      }
-
-      // 5. Build final track
-      const duration = `${Math.floor(saavn.duration / 60)}:${(saavn.duration % 60)
-      .toString().padStart(2, "0")}`;
-
-      const track = {
-        videoId,
-        slug: yt.slug,
-        title: yt.title,
-        artists: yt.artists,
-        image: saavn.image?.[3]?.url || saavn.image?.[2]?.url,
-        duration,
-        urls: {
-          audio: saavn.downloadUrl?.map(d => ({
-            quality: d.quality,
-            url: d.url
-          })) || []
-        },
-        playlistId: yt.playlistId,
-        browseId: yt.browseId,
-        createdAt: new Date(),
-      };
-
-      // 6. Cache & return
       await cacheTrackData(track);
       return track;
 
@@ -171,7 +131,7 @@ const useMusicUtils = ({
       } = await axios.get(
         `${YTMUSIC_BASE_URI}/lyrics?browseId=${browseId}`,
       );
-      
+
       if (!data?.data) return "No Lyrics Available";
 
       setCurrentTrack({
