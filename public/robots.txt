@@ -1,4 +1,4 @@
-Sitemap: https://flexiyo.pages.dev/api/ytmusic/sitemap.xml
+Sitemap: https://flexiyo.pages.dev/music/sitemap.xml
 
 User-agent: *
 Allow: /
