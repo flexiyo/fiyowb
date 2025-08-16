@@ -223,7 +223,7 @@ export async function getNextTrackData(videoId, playlistId, playedTrackIds) {
 
   // deterministic → first unplayed track
   const nextTrackId =
-    tracks[0]?.playlistPanelVideoRenderer?.navigationEndpoint?.watchEndpoint
+    tracks[1]?.playlistPanelVideoRenderer?.navigationEndpoint?.watchEndpoint
       ?.videoId;
 
   return { videoId: nextTrackId };
