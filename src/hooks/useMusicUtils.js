@@ -171,11 +171,7 @@ const useMusicUtils = ({
       } = await axios.get(
         `${YTMUSIC_BASE_URI}/lyrics?browseId=${browseId}`,
       );
-      const {
-        data
-      } = await axios.get(
-        `${YTMUSIC_BASE_URI}/lyrics/${browseId}`,
-      );
+      
       if (!data?.data) return "No Lyrics Available";
 
       setCurrentTrack({
