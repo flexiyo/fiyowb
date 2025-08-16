@@ -124,7 +124,7 @@ const SearchBox = ({
               >
                 <i className="fa fa-search text-gray-400 flex-shrink-0" />
                 <div className="flex min-w-0">
-                  <span className=" truncate font-medium text-lg text-white text-bold">
+                  <span className=" truncate font-medium text-lg text-black dark:text-white text-bold">
                     {item?.suggestionText || ""}
                   </span>
                   <span className="truncate text-gray-400 text-lg">
