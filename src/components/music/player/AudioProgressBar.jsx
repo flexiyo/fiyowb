@@ -25,7 +25,8 @@ const AudioProgressBar = ({
 
       const progressBar = progressBarRef.current;
       const rect = progressBar.getBoundingClientRect();
-      const clickPosition = e.clientX - rect.left;
+      const clientX = e.clientX || (e.touches && e.touches[0]?.clientX) || 0;
+      const clickPosition = clientX - rect.left;
       const progressBarWidth = progressBar.clientWidth;
 
       const newPosition = Math.max(
@@ -40,6 +41,9 @@ const AudioProgressBar = ({
 
   const handleProgressBarClick = useCallback(
     (e) => {
+      // Don't handle click if we're dragging
+      if (isDragging) return;
+      
       const newPosition = calculatePositionFromEvent(e);
 
       if (newPosition === null) return;
@@ -49,12 +53,15 @@ const AudioProgressBar = ({
       setDraggedPosition(null);
       setIsDragging(false);
     },
-    [calculatePositionFromEvent, seekTo]
+    [calculatePositionFromEvent, seekTo, isDragging]
   );
 
   const handleMouseDown = useCallback(
     (e) => {
       if (!duration) return;
+
+      // Prevent text selection while dragging
+      e.preventDefault();
 
       const newPosition = calculatePositionFromEvent(e);
 
@@ -92,17 +99,34 @@ const AudioProgressBar = ({
     setDraggedPosition(null);
   }, [isDragging, draggedPosition, seekTo]);
 
+  const handleTouchStart = useCallback((e) => {
+    handleMouseDown(e);
+  }, [handleMouseDown]);
+
+  const handleTouchMove = useCallback((e) => {
+    e.preventDefault();
+    handleMouseMove(e);
+  }, [handleMouseMove]);
+
+  const handleTouchEnd = useCallback(() => {
+    handleMouseUp();
+  }, [handleMouseUp]);
+
   useEffect(() => {
     if (isDragging) {
       window.addEventListener("mousemove", handleMouseMove);
       window.addEventListener("mouseup", handleMouseUp);
+      window.addEventListener("touchmove", handleTouchMove, { passive: false });
+      window.addEventListener("touchend", handleTouchEnd);
 
       return () => {
         window.removeEventListener("mousemove", handleMouseMove);
         window.removeEventListener("mouseup", handleMouseUp);
+        window.removeEventListener("touchmove", handleTouchMove);
+        window.removeEventListener("touchend", handleTouchEnd);
       };
     }
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
   const displayPosition = draggedPosition !== null ? draggedPosition : position;
 
@@ -117,6 +141,7 @@ const AudioProgressBar = ({
           className="w-full h-1 bg-gray-300 dark:bg-gray-700 rounded-full cursor-pointer relative"
           onClick={handleProgressBarClick}
           onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
         >
           <div
             className="absolute left-0 top-0 h-full bg-green-500 rounded-full"

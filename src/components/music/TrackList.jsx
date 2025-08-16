@@ -14,13 +14,10 @@ const TrackItem = memo(({ track, loading }) => {
   const [downloadLoading, setDownloadLoading] = useState(false);
   const menuRef = useRef(null);
 
-  const trackTitle = track?.title || track?.name;
-  const trackArtists =
-    track?.artists?.primary?.map((artist) => artist.name).join(", ") ||
-    track?.artists ||
-    "Unknown Artist";
-  const trackImage = track?.images?.[1]?.url || track?.image?.[1]?.url;
-  const trackId = track?.id || track?.videoId;
+  const trackTitle = track?.title;
+  const trackArtists =track?.artists || "Unknown Artist";
+  const trackImage = track?.images?.[1]?.url;
+  const trackId = track?.videoId;
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -44,7 +41,7 @@ const TrackItem = memo(({ track, loading }) => {
   }, [getTrack, trackId, loading]);
 
   const handleShare = useCallback(async () => {
-    const shareUrl = `https://flexiyo.pages.dev/music/_${trackId}`;
+    const shareUrl = `https://flexiyo.pages.dev/music/${track?.slug}`;
     try {
       if (navigator.share && navigator.canShare?.({ url: shareUrl })) {
         await navigator.share({
@@ -63,7 +60,7 @@ const TrackItem = memo(({ track, loading }) => {
   }, [track, trackId, trackTitle, trackArtists]);
 
   const handleCopyLink = useCallback(async () => {
-    const shareUrl = `https://flexiyo.pages.dev/music/_${trackId}`;
+    const shareUrl = `https://flexiyo.pages.dev/music/${track?.slug}`;
     try {
       await navigator.clipboard.writeText(shareUrl);
       console.log("Link copied to clipboard!");

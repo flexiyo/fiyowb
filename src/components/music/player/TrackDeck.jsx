@@ -97,7 +97,7 @@ const TrackDeck = () => {
           </svg>
         </button>
       </div>
-      {/* }<div
+      <div
         className="flex flex-col justify-center rounded-xl p-4 w-full bg-secondary-bg dark:bg-secondary-bg-dark gap-4"
       >
         <h2 className="text-2xl">Lyrics</h2>
@@ -119,7 +119,7 @@ const TrackDeck = () => {
             Load Lyrics
           </button>
         )}
-      </div> */}
+      </div>
     </div>
   );
 };
