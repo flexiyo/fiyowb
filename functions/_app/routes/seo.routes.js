@@ -60,7 +60,7 @@ seoRoutes.get("*", async (c) => {
   const ua = c.req.header("User-Agent") || "";
   if (!isBot(ua)) return c.notFound();
 
-  const path = new URL(c.req.path).href;
+  const path = c.req.path;
   return await renderDefaultPage(path);
 });
 
