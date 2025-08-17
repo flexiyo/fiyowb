@@ -1,8 +1,8 @@
 import {
   getTrackData
 } from "./ytmusic.lib.js";
-import defaultTemplate from '../templates/defaultTemplate.html';
 import seoTemplate from "../templates/seoTemplate.html";
+import { pagesMeta } from "../constants.js"
 
 export function renderSeoPage(template, data = {}) {
   return Object.entries(data).reduce((html, [key, value]) => {
@@ -10,11 +10,22 @@ export function renderSeoPage(template, data = {}) {
   }, template)
 }
 
+export async function renderDefaultPage(reqPath) {
+  const meta = pagesMeta.find((p) => p.path === reqPath) || pagesMeta[0];
 
-export async function renderDefaultPage(url) {
-  const canonicalUrl = url.toString();
+  const html = renderSeoPage(seoTemplate, {
+    title: meta.title,
+    description: meta.description,
+    canonical_url: meta.url,
+    keywords: "social, clips, music, Flexiyo",
+    author: "Flexiyo Team",
+    image: "https://flexiyo.pages.dev/logo192.png",
+    og_type: "website",
+    twitter_handle: "flexiyo",
+    structured_data: "{}",
+    content_block: `<p>${meta.description}</p>`,
+  });
 
-  const html = defaultTemplate.replaceAll('__CANONICAL_URL__', canonicalUrl);
   return new Response(html, {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
@@ -53,8 +64,8 @@ export async function renderMusicPage(slug, env) {
     const canonical = `https://flexiyo.pages.dev/music/${slug}`;
     const image = images?.[1]?.url || "";
     const description = `Listen to ${title} by ${artists
-    .split("•")[0]
-    .trim()}. Enjoy high-quality audio, view lyrics, and more on Flexiyo Music.`;
+      .split("•")[0]
+      .trim()}. Enjoy high-quality audio, view lyrics, and more on Flexiyo Music.`;
 
     const jsonLD = JSON.stringify({
       "@context": "https://schema.org",
@@ -82,10 +93,9 @@ export async function renderMusicPage(slug, env) {
       content_block: `
       <p><strong>Duration:</strong> ${duration}</p>
       <p><strong>Plays:</strong> ${playsCount}</p>
-      ${
-      image
-      ? `<figure><img src="${image}" alt="${title}" loading="lazy" /></figure>`: ""
-      }
+      ${image
+          ? `<figure><img src="${image}" alt="${title}" loading="lazy" /></figure>` : ""
+        }
       `,
     });
 
@@ -146,17 +156,15 @@ export async function renderUserPage(username) {
         user.html_url,
         user.blog,
         user.twitter_username
-        ? `https://twitter.com/${user.twitter_username}`: null,
+          ? `https://twitter.com/${user.twitter_username}` : null,
       ].filter(Boolean),
     });
 
     const html = renderSeoPage(seoTemplate, {
       title: `${user.name || user.login} (@${user.login}) - Flexiyo`,
-      description: `${user.followers} Followers | ${
-      user.public_repos
-      } Repositories. View the profile of ${
-      user.name || user.login
-      } on Flexiyo.`,
+      description: `${user.followers} Followers | ${user.public_repos
+        } Repositories. View the profile of ${user.name || user.login
+        } on Flexiyo.`,
       keywords: `${user.login}, github, developer, portfolio`,
       author: user.login,
       canonical_url: canonical,
@@ -165,10 +173,9 @@ export async function renderUserPage(username) {
       twitter_handle: user.twitter_username || "",
       structured_data: jsonLD,
       content_block: `
-      ${
-      image
-      ? `<img src="${image}" width="120" alt="${user.login}" loading="lazy" />`: ""
-      }
+      ${image
+          ? `<img src="${image}" width="120" alt="${user.login}" loading="lazy" />` : ""
+        }
       <p><strong>Followers:</strong> ${user.followers.toLocaleString()}</p>
       <p><strong>Following:</strong> ${user.following.toLocaleString()}</p>
       <p><strong>Public Repos:</strong> ${user.public_repos.toLocaleString()}</p>

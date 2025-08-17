@@ -14,7 +14,6 @@
     "@apollo/client": "^3.13.4",
     "@radix-ui/react-dialog": "^1.1.6",
     "axios": "^1.10.0",
-    "cheerio": "^1.0.0",
     "formik": "^2.4.6",
     "framer-motion": "^12.4.10",
     "graphql": "^16.10.0",

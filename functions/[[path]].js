@@ -46,3 +46,7 @@ export const onRequest = async ({ request, env, context }) => {
 
   return response;
 };
+
+export const fetch = (request, env, context) => {
+  return onRequest({ request, env, context });
+};

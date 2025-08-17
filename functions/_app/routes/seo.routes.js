@@ -40,7 +40,6 @@ export function isBot(userAgent = "") {
 
 seoRoutes.get("/music/sitemap.xml", ({ env }) => handleSitemap(env));
 
-// SEO route for music page
 seoRoutes.get("/music/:slug", async (c) => {
   const ua = c.req.header("User-Agent") || "";
   if (!isBot(ua)) return c.notFound();
@@ -49,7 +48,6 @@ seoRoutes.get("/music/:slug", async (c) => {
   return await renderMusicPage(slug, c.env);
 });
 
-// SEO route for user profile
 seoRoutes.get("/u/:username", async (c) => {
   const ua = c.req.header("User-Agent") || "";
   if (!isBot(ua)) return c.notFound();
@@ -58,13 +56,12 @@ seoRoutes.get("/u/:username", async (c) => {
   return await renderUserPage(username);
 });
 
-// Fallback for all unmatched bot-accessed routes
 seoRoutes.get("*", async (c) => {
   const ua = c.req.header("User-Agent") || "";
   if (!isBot(ua)) return c.notFound();
 
-  const canonicalUrl = new URL(c.req.url).href;
-  return await renderDefaultPage(canonicalUrl);
+  const path = new URL(c.req.path).href;
+  return await renderDefaultPage(path);
 });
 
 export default seoRoutes;
