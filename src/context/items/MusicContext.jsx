@@ -38,7 +38,7 @@ export const MusicProvider = ({ children }) => {
   useEffect(() => {
     if (!('mediaSession' in navigator)) return;
 
-    if (currentTrack?.title) {
+    if (currentTrack?.videoId) {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: currentTrack.title,
         artist: currentTrack.artists || 'Unknown Artist',
@@ -60,8 +60,27 @@ export const MusicProvider = ({ children }) => {
       handleNextAudioTrack();
     });
 
+    navigator.mediaSession.setActionHandler('previoustrack', () => {
+      // For now, seek to beginning of current track
+      seekTo(0);
+    });
+
+    navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+      const seekOffset = details.seekOffset || 5;
+      const newPosition = Math.max(0, audioProgress.position - seekOffset);
+      seekTo(newPosition);
+    });
+
+    navigator.mediaSession.setActionHandler('seekforward', (details) => {
+      const seekOffset = details.seekOffset || 5;
+      const newPosition = Math.min(audioProgress.duration, audioProgress.position + seekOffset);
+      seekTo(newPosition);
+    });
+
+    // Update playback state
     navigator.mediaSession.playbackState = isAudioPlaying ? 'playing' : 'paused';
-    
+
+    // Update position state
     if (audioProgress.duration > 0) {
       navigator.mediaSession.setPositionState({
         duration: audioProgress.duration,
@@ -75,6 +94,9 @@ export const MusicProvider = ({ children }) => {
       navigator.mediaSession.setActionHandler('play', null);
       navigator.mediaSession.setActionHandler('pause', null);
       navigator.mediaSession.setActionHandler('nexttrack', null);
+      navigator.mediaSession.setActionHandler('previoustrack', null);
+      navigator.mediaSession.setActionHandler('seekbackward', null);
+      navigator.mediaSession.setActionHandler('seekforward', null);
     };
   }, [currentTrack, isAudioPlaying, audioProgress, loopAudio]);
 
