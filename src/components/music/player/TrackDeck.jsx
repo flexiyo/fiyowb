@@ -99,7 +99,7 @@ const TrackDeck = () => {
           </svg>
         </button>
       </div>
-      <div className="flex flex-col justify-center rounded-xl p-4 w-full bg-secondary-bg dark:bg-secondary-bg-dark gap-4">
+      <div className="flex flex-col justify-center rounded-xl mt-4 p-4 w-full bg-secondary-bg dark:bg-secondary-bg-dark gap-4">
         <h2 className="text-2xl text-black dark:text-white">Lyrics</h2>
         {currentTrack?.lyrics ? (
           <p className="text-lg text-gray-900 dark:text-gray-200 max-h-[calc(100vh-300px)] break-words overflow-y-auto no-scrollbar">
