@@ -34,12 +34,12 @@ async function fetchYTMusic(endpoint, body) {
 export async function searchTracksInternal(term, continuation = null) {
   const body = continuation
     ? {
-        continuation,
-      }
+      continuation,
+    }
     : {
-        query: term,
-        params: "EgWKAQIIAWoSEAMQBBAJEA4QChAFEBEQEBAV",
-      };
+      query: term,
+      params: "EgWKAQIIAWoSEAMQBBAJEA4QChAFEBEQEBAV",
+    };
 
   const ytMusicData = await fetchYTMusic("search", body);
   if (!ytMusicData) throw new Error("YouTube Music API failed");
@@ -329,47 +329,51 @@ export async function getSuggestionsData(term) {
 // -----------------------------
 // Sitemap
 // -----------------------------
-const STATIC_SITEMAP_KEY = "static_sitemap";
-const STATIC_SITEMAP_TIMESTAMP_KEY = "static_sitemap_timestamp";
-const SITEMAP_EXPIRY_DAYS = 2;
-const STATIC_THRESHOLD = 25;
-
 function generateUrlEntry(slug, date) {
-  return `<url><loc>https://flexiyo.pages.dev/music/${slug}</loc><lastmod>${date}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`;
+  // ensure we only keep yyyy-mm-dd format
+  const lastmod = new Date(date).toISOString().split("T")[0];
+  return `
+            <url>
+                  <loc>https://flexiyo.pages.dev/music/${slug}</loc>
+                        <lastmod>${lastmod}</lastmod>
+                              <changefreq>weekly</changefreq>
+                                    <priority>0.8</priority>
+                                        </url>`;
 }
 
 function wrapInSitemap(entries) {
-  return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${entries.join(
-    "",
-  )}</urlset>`;
+  return `<?xml version="1.0" encoding="UTF-8"?>
+                                          <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+                                          ${entries.join("\n")}
+                                          </urlset>`;
 }
 
-async function buildDynamicSitemap(kvStore) {
+async function buildSitemap(kvStore) {
   const entries = [];
   let cursor;
+
   do {
-    const {
-      keys,
-      list_complete,
-      cursor: nextCursor,
-    } = await kvStore.list({
+    const { keys, list_complete, cursor: nextCursor } = await kvStore.list({
       cursor,
       limit: 100,
     });
+
     const rawDataEntries = await Promise.all(
-      keys.map((k) => kvStore.get(k.name)),
+      keys.map((k) => kvStore.get(k.name))
     );
+
     for (const rawData of rawDataEntries) {
       if (!rawData) continue;
       try {
         const data = JSON.parse(rawData);
-        if (data?.slug) {
+        if (data?.slug && data?.playedAt) {
           entries.push(generateUrlEntry(data.slug, data.playedAt));
         }
-      } catch (e) {
-        console.error("Invalid JSON in KV:", e);
+      } catch (_) {
+        // ignore bad entries silently
       }
     }
+
     cursor = nextCursor;
     if (list_complete) break;
   } while (cursor);
@@ -379,44 +383,13 @@ async function buildDynamicSitemap(kvStore) {
 
 export async function handleSitemap(env) {
   const kvStore = env.FIYOWB_MUSIC_SITEMAP;
-  const [staticSitemap, staticTimestamp] = await Promise.all([
-    kvStore.get(STATIC_SITEMAP_KEY),
-    kvStore.get(STATIC_SITEMAP_TIMESTAMP_KEY),
-  ]);
-
-  if (staticSitemap && staticTimestamp) {
-    const ageInMs = Date.now() - new Date(staticTimestamp).getTime();
-    if (ageInMs < SITEMAP_EXPIRY_DAYS * 24 * 60 * 60 * 1000) {
-      return new Response(staticSitemap, {
-        headers: {
-          "Content-Type": "application/xml",
-        },
-      });
-    } else {
-      Promise.all([
-        kvStore.delete(STATIC_SITEMAP_KEY),
-        kvStore.delete(STATIC_SITEMAP_TIMESTAMP_KEY),
-      ]).catch(console.error);
-    }
-  }
-
-  const sitemap = await buildDynamicSitemap(kvStore);
-  const keyCount = (
-    await kvStore.list({
-      limit: 1,
-    })
-  ).keys.length;
-
-  if (keyCount >= STATIC_THRESHOLD) {
-    Promise.all([
-      kvStore.put(STATIC_SITEMAP_KEY, sitemap),
-      kvStore.put(STATIC_SITEMAP_TIMESTAMP_KEY, new Date().toISOString()),
-    ]).catch(console.error);
-  }
+  const sitemap = await buildSitemap(kvStore);
 
   return new Response(sitemap, {
     headers: {
-      "Content-Type": "application/xml",
+      "Content-Type": "application/xml; charset=utf-8",
+      "Cache-Control": "public, max-age=3600", // 1h cache OK for Google
     },
   });
+}
 }
