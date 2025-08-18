@@ -36,6 +36,69 @@ export const MusicProvider = ({ children }) => {
   });
 
   useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+
+    if (currentTrack?.title) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: currentTrack.title,
+        artist: currentTrack.artists || 'Unknown Artist',
+        artwork: currentTrack.image ? [
+          { src: currentTrack.image, sizes: '512x512', type: 'image/jpeg' }
+        ] : []
+      });
+    }
+
+    navigator.mediaSession.setActionHandler('play', () => {
+      handleAudioPlay();
+    });
+
+    navigator.mediaSession.setActionHandler('pause', () => {
+      handleAudioPause();
+    });
+
+    navigator.mediaSession.setActionHandler('nexttrack', () => {
+      handleNextAudioTrack();
+    });
+
+    navigator.mediaSession.playbackState = isAudioPlaying ? 'playing' : 'paused';
+    
+    if (audioProgress.duration > 0) {
+      navigator.mediaSession.setPositionState({
+        duration: audioProgress.duration,
+        playbackRate: 1.0,
+        position: audioProgress.position
+      });
+    }
+
+    return () => {
+      // Clean up action handlers
+      navigator.mediaSession.setActionHandler('play', null);
+      navigator.mediaSession.setActionHandler('pause', null);
+      navigator.mediaSession.setActionHandler('nexttrack', null);
+    };
+  }, [currentTrack, isAudioPlaying, audioProgress, loopAudio]);
+
+  const handleAudioPlay = async () => {
+    try {
+      const audio = audioRef.current;
+      await audio.play();
+      setIsAudioPlaying(true);
+    } catch (error) {
+      console.error('Error playing audio:', error);
+    }
+  };
+
+  const handleAudioPause = () => {
+    try {
+      const audio = audioRef.current;
+      audio.pause();
+      setIsAudioPlaying(false);
+    } catch (error) {
+      console.error('Error pausing audio:', error);
+    }
+  };
+
+  useEffect(() => {
     if (isPlayerReady) return;
 
     try {
@@ -141,6 +204,7 @@ export const MusicProvider = ({ children }) => {
     await MusicUtils.handleNextAudioTrack();
     setIsHandlingNextAudioTrack(false);
   };
+
   const seekTo = (position) => {
     if (!audioRef.current) return;
     setAudioProgress({ position, duration: audioProgress?.duration });
@@ -167,6 +231,8 @@ export const MusicProvider = ({ children }) => {
         isTrackDeckOpen,
         setIsTrackDeckOpen,
         handleNextAudioTrack,
+        handleAudioPlay,
+        handleAudioPause,
         seekTo,
         ...MusicUtils,
       }}
