@@ -36,7 +36,7 @@ export async function renderDefaultPage(reqPath) {
 
 // MUSIC SSR PAGE
 export async function renderMusicPage(slug, env) {
-  const videoId = slug?.split("_").pop();
+  const videoId = slug?.substring(slug.indexOf("_") + 1);
 
   if (!videoId) {
     return new Response("Invalid URL: Video ID not found.", {
