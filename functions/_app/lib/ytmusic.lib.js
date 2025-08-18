@@ -392,4 +392,3 @@ export async function handleSitemap(env) {
     },
   });
 }
-}
