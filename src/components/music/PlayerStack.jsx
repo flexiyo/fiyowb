@@ -1,7 +1,7 @@
 import { useState, useContext, useEffect, useCallback, useMemo } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { motion, AnimatePresence } from "framer-motion";
-import { Share2 } from "lucide-react";
+import { Share2, ChevronDown } from "lucide-react";
 import MusicContext from "../../context/items/MusicContext";
 import TrackDeck from "./player/TrackDeck";
 import TrackPlayer from "./player/TrackPlayer";
