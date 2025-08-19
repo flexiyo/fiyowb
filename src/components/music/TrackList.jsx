@@ -122,53 +122,56 @@ const TrackItem = memo(({
     []);
 
   const handleDownload = async () => {
-  if (!trackId) {
-    alert("Track ID not available.");
-    return;
-  }
-
-  setDownloadLoading(true);
-
-  try {
-    const fetched = await getTrackData(trackId);
-    const qualityIndex = {
-      Low: 2,
-      Normal: 3,
-      High: 4,
-    }[quality];
-
-    const audioUrl = fetched?.urls?.audio?.[qualityIndex]?.url;
-    if (!audioUrl) {
-      alert("Download URL not available for the selected quality.");
-      setDownloadLoading(false);
+    if (!trackId) {
+      alert("Track ID not available.");
       return;
     }
 
-    const response = await fetch(audioUrl);
-    if (!response.ok) throw new Error("Failed to fetch audio file.");
-    const blob = await response.blob();
+    setDownloadLoading(true);
 
-    const artists = fetched?.artists?.join(", ") || "Unknown Artist";
-    const fileName = `${fetched.title || "track"} - ${artists}.mp3`;
+    try {
+      const fetched = await getTrackData(trackId);
+      const qualityIndex = {
+        Low: 2,
+        Normal: 3,
+        High: 4,
+      }[quality];
 
-    const blobUrl = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = blobUrl;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const audioUrl = fetched?.urls?.audio?.[qualityIndex]?.url;
+      if (!audioUrl) {
+        alert("Download URL not available for the selected quality.");
+        setDownloadLoading(false);
+        return;
+      }
 
-    URL.revokeObjectURL(blobUrl);
+      const response = await fetch(audioUrl);
+      if (!response.ok) throw new Error("Failed to fetch audio file.");
+      const blob = await response.blob();
 
-    setShowDownloadModal(false);
-  } catch (err) {
-    console.error(err);
-    alert("Failed to download track.");
-  } finally {
-    setDownloadLoading(false);
-  }
-};
+      const firstArtist = fetched?.artists?.split(/,|&|•/)[0]
+      .trim()
+      .slice(0, 15);
+      
+      const fileName = `${fetched.title || "track"} - ${firstArtist}.mp3`;
+
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(blobUrl);
+
+      setShowDownloadModal(false);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to download track.");
+    } finally {
+      setDownloadLoading(false);
+    }
+  };
 
   const menuOptions = [{
     icon: Share2,
