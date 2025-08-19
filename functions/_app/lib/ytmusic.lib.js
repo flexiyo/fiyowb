@@ -277,7 +277,7 @@ export async function getNextTrackData(videoId, playlistId, playedTrackIds) {
   }
 
   const nextTrackId =
-    tracks[0]?.playlistPanelVideoRenderer?.navigationEndpoint?.watchEndpoint
+    tracks[1]?.playlistPanelVideoRenderer?.navigationEndpoint?.watchEndpoint
       ?.videoId;
 
   return {
