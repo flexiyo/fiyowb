@@ -265,19 +265,19 @@ export async function getNextTrackData(videoId, playlistId, playedTrackIds) {
   if (!playlist) throw new Error("No playlist available");
 
   const playedIds = new Set(playedTrackIds || []);
+
   const tracks = playlist.filter(
     (item) =>
       item?.playlistPanelVideoRenderer &&
-      !playedIds.has(item.playlistPanelVideoRenderer.videoId),
+      !playedIds.has(item.playlistPanelVideoRenderer.videoId)
   );
 
-  if (tracks.length === 0)
-    return {
-      videoId: null,
-    };
+  if (tracks.length === 0) {
+    return { videoId: null };
+  }
 
   const nextTrackId =
-    tracks[1]?.playlistPanelVideoRenderer?.navigationEndpoint?.watchEndpoint
+    tracks[0]?.playlistPanelVideoRenderer?.navigationEndpoint?.watchEndpoint
       ?.videoId;
 
   return {
