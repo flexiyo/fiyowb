@@ -122,12 +122,14 @@ const TrackItem = memo(({
     []);
 
   const handleDownload = async () => {
-    if (!trackId) {
-      alert("Track ID not available.");
-      return;
-    }
-    setDownloadLoading(true);
+  if (!trackId) {
+    alert("Track ID not available.");
+    return;
+  }
 
+  setDownloadLoading(true);
+
+  try {
     const fetched = await getTrackData(trackId);
     const qualityIndex = {
       Low: 2,
@@ -135,25 +137,38 @@ const TrackItem = memo(({
       High: 4,
     }[quality];
 
-    const selectedUrl = fetched?.urls?.audio?.[qualityIndex]?.url;
-
-    if (!selectedUrl) {
+    const audioUrl = fetched?.urls?.audio?.[qualityIndex]?.url;
+    if (!audioUrl) {
       alert("Download URL not available for the selected quality.");
       setDownloadLoading(false);
       return;
     }
 
+    const response = await fetch(audioUrl);
+    if (!response.ok) throw new Error("Failed to fetch audio file.");
+    const blob = await response.blob();
+
+    const artists = fetched?.artists?.join(", ") || "Unknown Artist";
+    const fileName = `${fetched.title || "track"} - ${artists}.mp3`;
+
+    const blobUrl = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.href = selectedUrl;
-    link.download = `${trackTitle || "track"}_${quality}.mp3`;
-    link.target = "_blank";
+    link.href = blobUrl;
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
-    setDownloadLoading(false);
+    URL.revokeObjectURL(blobUrl);
+
     setShowDownloadModal(false);
-  };
+  } catch (err) {
+    console.error(err);
+    alert("Failed to download track.");
+  } finally {
+    setDownloadLoading(false);
+  }
+};
 
   const menuOptions = [{
     icon: Share2,
@@ -325,7 +340,7 @@ const TrackItem = memo(({
                 <option value="High">High Quality (320 kbps)</option>
               </select>
               <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                A new tab will open to start the download.
+                The download will start automatically
               </p>
             </div>
 
