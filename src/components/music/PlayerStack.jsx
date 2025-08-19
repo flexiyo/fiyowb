@@ -22,6 +22,7 @@ const PlayerStack = () => {
 
   // Memoize handlers to prevent recreations
   const openTrackDeck = useCallback(() => setIsTrackDeckOpen(true), [setIsTrackDeckOpen]);
+  
   const closeTrackDeck = useCallback(() => setIsTrackDeckOpen(false), [setIsTrackDeckOpen]);
 
   // Optimized share handler
@@ -154,7 +155,16 @@ const PlayerStack = () => {
                       <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto my-2 flex-shrink-0" />
 
                       {/* Header */}
-                      <div className="flex justify-between items-center px-6 py-2 flex-shrink-0">
+                      <div className="flex justify-between items-center px-6 py-2 flex-shrink-0">                 <button
+                          onClick={closeTrackDeck}
+                          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors active:scale-95"
+                          aria-label="Close track deck"
+                        >
+                          <ChevronDown 
+                            size={28} 
+                            className="text-gray-700 dark:text-gray-300" 
+                          />
+                        </button>
                         <h2 className="text-lg font-semibold text-black dark:text-white">
                           Now Playing
                         </h2>
