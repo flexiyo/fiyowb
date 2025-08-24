@@ -36,11 +36,18 @@ export default function App() {
       <main className="w-full max-w-7xl mx-auto md:px-6 pb-12 md:pb-0">
         <PlayerStack />
 
-        {!isUserAuthenticated && (
-          <Route path="/" element={<Navigate to="/music" replace />} />
-        )}
-        
-        <Routes>{renderRoutes(routes, isUserAuthenticated)}</Routes>
+        <Routes>
+          {/* Redirect root if not authenticated */}
+          {!isUserAuthenticated && (
+            <Route path="/" element={<Navigate to="/music" replace />} />
+          )}
+
+          {/* Render all routes */}
+          {renderRoutes(routes, isUserAuthenticated)}
+
+          {/* Fallback 404 */}
+          <Route path="*" element={<Navigate to={isUserAuthenticated ? "/" : "/music"} replace />} />
+        </Routes>
       </main>
     </div>
   );
