@@ -13,23 +13,45 @@ export function renderSeoPage(template, data = {}) {
 export async function renderDefaultPage(reqPath) {
   const meta = pagesMeta.find((p) => p.path === reqPath) || pagesMeta[0];
 
+  // Build JSON-LD structured data (basic Article/Website schema)
+  const structuredData = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": meta.title,
+    "description": meta.description,
+    "url": meta.url,
+    "author": {
+      "@type": "Organization",
+      "name": "Flexiyo Team"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Flexiyo",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://flexiyo.pages.dev/logo192.png"
+      }
+    }
+  });
+
   const html = renderSeoPage(seoTemplate, {
     title: meta.title,
-    description: meta.description,
+    description: meta.summary,
     canonical_url: meta.url,
-    keywords: "social, clips, music, Flexiyo",
+    keywords: meta.keywords,
     author: "Flexiyo Team",
     image: "https://flexiyo.pages.dev/logo192.png",
     og_type: "website",
     twitter_handle: "flexiyo",
-    structured_data: "{}",
-    content_block: `<p>${meta.description}</p>`,
+    structured_data: structuredData,
+    content_block: meta.content_block,
+    page_heading: meta.heading,
   });
 
   return new Response(html, {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "public, max-age=3600, s-maxage=86400",
+      "Cache-Control": "public, max-age=3600, s-maxage=86400"
     },
   });
 }
@@ -80,21 +102,43 @@ export async function renderMusicPage(slug, env) {
       description,
     });
 
+    const metaKeywords = artists ? artists.split("•")[0].replace(/&/g, ",").split(/[\s,]+/).concat(title.replace(/[^\w\s]/g, "").split(" ")).filter(Boolean).join(", ") : title.replace(/[^\w\s]/g, "").split(" ").filter(Boolean).join(", ")
+
+    const cleanArtist = artists.replace(/•.*$/, "").trim();
+
     const html = renderSeoPage(seoTemplate, {
-      title: `${title} - ${artists}`,
-      description,
-      keywords: keywords.join(", "),
-      author: artists,
+      title: `${title} - ${cleanArtist}`,
+      description: `Listen to ${title} by ${cleanArtist}. Enjoy high-quality audio, view lyrics, and more on Flexiyo Music.`,
+      keywords: `${metaKeywords}, music, song, audio, track, mp3, listen online, streaming, playlist, trending music, new release, popular song, hit track, music sharing, Flexiyo`,
+      author: cleanArtist || "Flexiyo Team",
       canonical_url: canonical,
       image,
       og_type: "music.song",
       twitter_handle: "x_flexiyo",
-      structured_data: jsonLD,
+      structured_data: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "MusicRecording",
+        "name": title,
+        "byArtist": {
+          "@type": "MusicGroup",
+          "name": cleanArtist
+        },
+        "duration": duration ? `PT${duration.split(":")[0]}M${duration.split(":")[1]}S` : undefined,
+        "image": image,
+        "url": canonical,
+        "description": `Listen to ${title} by ${cleanArtist}. Enjoy high-quality audio, view lyrics, and more on Flexiyo Music.`
+      }, null, 2),
+      page_heading: title,
       content_block: `
-      <p><strong>Duration:</strong> ${duration}</p>
-      <p><strong>Plays:</strong> ${playsCount}</p>
-      ${image
-          ? `<figure><img src="${image}" alt="${title}" loading="lazy" /></figure>` : ""
+        <p><strong>Artists:</strong> ${cleanArtist || "Unknown"}</p>
+        <p><strong>Duration:</strong> ${duration.split(":")[0]} min ${duration.split(":")[1]} sec</p>
+        <p><strong>Plays:</strong> ${playsCount || 0}</p>
+        ${image
+          ? `<figure>
+             <img src="${image}" alt="${title}" loading="lazy" />
+             <figcaption>${title} by ${cleanArtist}</figcaption>
+           </figure>`
+          : ""
         }
       `,
     });
