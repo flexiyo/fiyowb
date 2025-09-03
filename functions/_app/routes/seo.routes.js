@@ -58,9 +58,10 @@ seoRoutes.get("/u/:username", async (c) => {
 
 seoRoutes.get("*", async (c) => {
   const ua = c.req.header("User-Agent") || "";
-  if (!isBot(ua)) return c.notFound();
-
   const path = c.req.path;
+
+  if (!isBot(ua) || /\.[a-zA-Z0-9]+($|\?)/.test(path) || path.startsWith("/google")) return c.notFound();
+
   return await renderDefaultPage(path);
 });
 
