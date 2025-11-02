@@ -78,7 +78,6 @@ export async function renderMusicPage(slug, env) {
       title,
       artists,
       keywords,
-      duration,
       playsCount,
       images
     } = trackData;
@@ -96,7 +95,6 @@ export async function renderMusicPage(slug, env) {
       byArtist: {
         "@type": "MusicGroup", name: artists
       },
-      duration,
       image,
       url: canonical,
       description,
@@ -123,7 +121,6 @@ export async function renderMusicPage(slug, env) {
           "@type": "MusicGroup",
           "name": cleanArtist
         },
-        "duration": duration ? `PT${duration.split(":")[0]}M${duration.split(":")[1]}S` : undefined,
         "image": image,
         "url": canonical,
         "description": `Listen to ${title} by ${cleanArtist}. Enjoy high-quality audio, view lyrics, and more on Flexiyo Music.`
@@ -131,7 +128,6 @@ export async function renderMusicPage(slug, env) {
       page_heading: title,
       content_block: `
         <p><strong>Artists:</strong> ${cleanArtist || "Unknown"}</p>
-        <p><strong>Duration:</strong> ${duration.split(":")[0]} min ${duration.split(":")[1]} sec</p>
         <p><strong>Plays:</strong> ${playsCount || 0}</p>
         ${image
           ? `<figure>
