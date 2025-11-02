@@ -175,30 +175,12 @@ export async function getTrackData(videoId, env, ssr) {
 
     const { artists, images, playsCount } = found;
 
-    // Extract first artist ONLY for Saavn query
-    const firstArtist = artists?.split("•")[0].split(",")[0].split("&")[0].trim();
+    const response = await fetch(
+      `https://yt-extractor-vmgt.onrender.com/extract?url=https://youtu.be/${videoId}`
+      );
 
-    // Saavn search: clean title + first artist
-    const saavnQuery = `${title.replace(/\(.*?\)/g, "").trim()} ${firstArtist}`;
-    const saavnRes = await fetch(
-      `https://fiyosaavn.vercel.app/api/search/songs?query=${encodeURIComponent(
-        saavnQuery
-      )}&limit=1`
-    ).then((r) => r.json());
-
-    const saavnTrack = saavnRes?.data?.results?.[0];
-    if (!saavnTrack) throw new Error("No track found on Saavn");
-
-    const downloadUrl =
-      saavnTrack.downloadUrl?.map((d) => ({
-        quality: d.quality,
-        url: d.url,
-      })) || [];
-
-    const duration = `${Math.floor(saavnTrack.duration / 60)}:${String(
-      saavnTrack.duration % 60
-    ).padStart(2, "0")}`;
-
+    const audioUrls = await response.json()
+    
     const baseSlug = title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
@@ -221,11 +203,10 @@ export async function getTrackData(videoId, env, ssr) {
       title,
       keywords: [],
       artists,
-      duration,
       playsCount,
       images,
       urls: {
-        audio: downloadUrl,
+        audio: audioUrls.,
       },
     };
 
