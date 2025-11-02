@@ -206,7 +206,7 @@ export async function getTrackData(videoId, env, ssr) {
       playsCount,
       images,
       urls: {
-        audio: audioUrls.,
+        audio: audioUrls,
       },
     };
 
