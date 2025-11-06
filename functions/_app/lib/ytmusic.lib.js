@@ -245,27 +245,25 @@ export async function getNextTrackData(videoId, playlistId, playedTrackIds) {
 
   if (!playlist) throw new Error("No playlist available");
 
-  const playedIds = new Set(playedTrackIds || []);
-
-  const tracks = playlist.filter(
-    (item) =>
-      item?.playlistPanelVideoRenderer &&
-      !playedIds.has(item.playlistPanelVideoRenderer.videoId)
+  const playedIds = new Set(
+    (playedTrackIds || [])
+      .map((id) => id.trim())
+      .filter((id) => id.length > 0)
   );
 
-  if (tracks.length === 0) {
-    return { videoId: null };
-  }
+  const unplayedTracks = playlist.filter((item) => {
+    const trackId = item?.playlistPanelVideoRenderer?.videoId;
+    return trackId && !playedIds.has(trackId);
+  });
+
+  if (unplayedTracks.length === 0) return { videoId: null };
 
   const nextTrackId =
-    tracks[1]?.playlistPanelVideoRenderer?.navigationEndpoint?.watchEndpoint
-      ?.videoId;
+    unplayedTracks[0]?.playlistPanelVideoRenderer?.navigationEndpoint
+      ?.watchEndpoint?.videoId;
 
-  return {
-    videoId: nextTrackId,
-  };
+  return { videoId: nextTrackId };
 }
-
 // -----------------------------
 // Lyrics
 // -----------------------------
